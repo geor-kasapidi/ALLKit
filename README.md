@@ -32,6 +32,10 @@ Check out the demo project (requires `pod install`) and read the docs:
 * [AutoDiff](Docs/auto_diff.md)
 * [FlexBox](Docs/flexbox.md)
 
+## Apps
+
+* **FantLab** - [Source code](https://github.com/FantLab/FantLab-iOS), [AppStore page](https://itunes.apple.com/ru/app/fantlab/id1444604860?mt=8)
+
 ## Demo screenshots
 
 ![Screens](allkit_screens.png)

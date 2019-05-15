@@ -31,3 +31,7 @@ Check out the demo project (requires `pod install`) and read the docs:
 * [Animations](Docs/animations.md)
 * [AutoDiff](Docs/auto_diff.md)
 * [FlexBox](Docs/flexbox.md)
+
+## Demo screenshots
+
+![Screens](allkit_screens.png)

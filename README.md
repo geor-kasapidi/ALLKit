@@ -1,4 +1,4 @@
-# ALLKit [![Build Status](https://travis-ci.org/geor-kasapidi/ALLKit.svg?branch=master)](https://travis-ci.org/geor-kasapidi/ALLKit)
+# ALLKit [![Build Status](https://travis-ci.org/geor-kasapidi/ALLKit.svg?branch=master)](https://travis-ci.org/geor-kasapidi/ALLKit) ![PodL](https://img.shields.io/cocoapods/l/ALLKit.svg) ![PodV](https://img.shields.io/cocoapods/v/ALLKit.svg) ![Swift](https://img.shields.io/badge/swift-5-orange.svg) ![iOS](https://img.shields.io/badge/iOS-9+-blue.svg)
 
 A declarative data-driven framework for rapid development of smooth UI
 

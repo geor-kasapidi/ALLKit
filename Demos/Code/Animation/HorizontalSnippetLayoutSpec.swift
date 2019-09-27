@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import ALLKit
+import Nuke
 
 final class HorizontalSnippetLayoutSpec: ModelLayoutSpec<AnimationDemoModel> {
     override func makeNodeFrom(model: AnimationDemoModel, sizeConstraints: SizeConstraints) -> LayoutNode {
@@ -43,7 +44,14 @@ final class HorizontalSnippetLayoutSpec: ModelLayoutSpec<AnimationDemoModel> {
                 imageView.contentMode = .scaleAspectFill
                 imageView.backgroundColor = #colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1)
                 imageView.layer.masksToBounds = true
-                imageView.yy_setImage(with: model.url, options: [.setImageWithFadeAnimation])
+
+                model.url.flatMap {
+                    _ = Nuke.loadImage(
+                        with: $0,
+                        options: ImageLoadingOptions(transition: .fadeIn(duration: 0.33)),
+                        into: imageView
+                    )
+                }
             }
         }
 

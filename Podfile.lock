@@ -14,41 +14,31 @@ PODS:
   - ALLKit/StringBuilder (1.0)
   - ALLKit/Support (1.0):
     - ALLKit/Layout
+  - Nuke (8.2.0)
   - PinIt (1.0)
   - Yoga (1.14.0)
-  - YYCache (1.0.4)
-  - YYImage (1.0.4):
-    - YYImage/Core (= 1.0.4)
-  - YYImage/Core (1.0.4)
-  - YYWebImage (1.0.5):
-    - YYCache
-    - YYImage
 
 DEPENDENCIES:
   - ALLKit (from `./`)
+  - Nuke
   - PinIt
-  - YYWebImage
 
 SPEC REPOS:
-  https://github.com/cocoapods/specs.git:
+  trunk:
+    - Nuke
     - PinIt
     - Yoga
-    - YYCache
-    - YYImage
-    - YYWebImage
 
 EXTERNAL SOURCES:
   ALLKit:
     :path: "./"
 
 SPEC CHECKSUMS:
-  ALLKit: 510fa24923ec604fd46086f96d8a567f72df7b73
+  ALLKit: 1f998b29cfac8bb89b3faca6012103b49c6e8323
+  Nuke: 0134d56b7c9dd3e69e9bce8bdcb37c2e0d55469f
   PinIt: 4590ce0526181463ff7b93eb2ff2fe66fc230999
   Yoga: cff67a400f6b74dc38eb0bad4f156673d9aa980c
-  YYCache: 8105b6638f5e849296c71f331ff83891a4942952
-  YYImage: 1e1b62a9997399593e4b9c4ecfbbabbf1d3f3b54
-  YYWebImage: 5f7f36aee2ae293f016d418c7d6ba05c4863e928
 
-PODFILE CHECKSUM: ba6a9f41bd724d0226190d585e0223973791f4c7
+PODFILE CHECKSUM: 7a6ec6cff2fa30aa678ab47fa93fcf5cce3c48a4
 
-COCOAPODS: 1.6.1
+COCOAPODS: 1.8.0

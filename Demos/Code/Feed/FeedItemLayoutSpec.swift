@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 import ALLKit
-import YYWebImage
+import Nuke
 
 final class FeedItemLayoutSpec: ModelLayoutSpec<FeedItem> {
     override func makeNodeFrom(model: FeedItem, sizeConstraints: SizeConstraints) -> LayoutNode {
@@ -27,7 +27,14 @@ final class FeedItemLayoutSpec: ModelLayoutSpec<FeedItem> {
                 imageView.backgroundColor = #colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1)
                 imageView.layer.cornerRadius = 20
                 imageView.layer.masksToBounds = true
-                imageView.yy_setImage(with: model.avatar, options: [.setImageWithFadeAnimation])
+
+                model.avatar.flatMap {
+                    _ = Nuke.loadImage(
+                        with: $0,
+                        options: ImageLoadingOptions(transition: .fadeIn(duration: 0.33)),
+                        into: imageView
+                    )
+                }
             }
 
             let titleNode = LayoutNode(sizeProvider: attributedTitleText, config: { node in
@@ -58,7 +65,14 @@ final class FeedItemLayoutSpec: ModelLayoutSpec<FeedItem> {
         }) { (imageView: UIImageView, _) in
             imageView.contentMode = .scaleAspectFill
             imageView.backgroundColor = #colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1)
-            imageView.yy_setImage(with: model.image, options: [.setImageWithFadeAnimation])
+
+            model.image.flatMap {
+                _ = Nuke.loadImage(
+                    with: $0,
+                    options: ImageLoadingOptions(transition: .fadeIn(duration: 0.33)),
+                    into: imageView
+                )
+            }
         }
 
         let likesNode: LayoutNode

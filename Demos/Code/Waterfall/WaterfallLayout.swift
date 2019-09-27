@@ -39,7 +39,7 @@ final class WaterfallLayout: UICollectionViewLayout {
         let collectionViewWidth = collectionView.bounds.width
         let columnWidth = columnWidthFor(viewWidth: collectionViewWidth)
 
-        var xOffset: [CGFloat] = (0..<numberOfColumns).map {
+        let xOffset: [CGFloat] = (0..<numberOfColumns).map {
             CGFloat($0) * columnWidth
         }
 

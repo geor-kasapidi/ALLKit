@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 import ALLKit
-import YYWebImage
+import Nuke
 
 final class PortraitProfileLayoutSpec: ModelLayoutSpec<UserProfile> {
     override func makeNodeFrom(model: UserProfile, sizeConstraints: SizeConstraints) -> LayoutNode {
@@ -27,7 +27,14 @@ final class PortraitProfileLayoutSpec: ModelLayoutSpec<UserProfile> {
                 imageView.layer.cornerRadius = 50
                 imageView.layer.masksToBounds = true
                 imageView.contentMode = .scaleAspectFill
-                imageView.yy_setImage(with: model.avatar, options: .setImageWithFadeAnimation)
+
+                model.avatar.flatMap {
+                    _ = Nuke.loadImage(
+                        with: $0,
+                        options: ImageLoadingOptions(transition: .fadeIn(duration: 0.33)),
+                        into: imageView
+                    )
+                }
             }
         }
 
@@ -79,7 +86,14 @@ final class LandscapeProfileLayoutSpec: ModelLayoutSpec<UserProfile> {
                 imageView.layer.cornerRadius = 50
                 imageView.layer.masksToBounds = true
                 imageView.contentMode = .scaleAspectFill
-                imageView.yy_setImage(with: model.avatar, options: .setImageWithFadeAnimation)
+
+                model.avatar.flatMap {
+                    _ = Nuke.loadImage(
+                        with: $0,
+                        options: ImageLoadingOptions(transition: .fadeIn(duration: 0.33)),
+                        into: imageView
+                    )
+                }
             }
         }
 

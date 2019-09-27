@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 import ALLKit
-import YYWebImage
+import Nuke
 
 final class GalleryPhotoLayoutSpec: ModelLayoutSpec<URL> {
     override func makeNodeFrom(model: URL, sizeConstraints: SizeConstraints) -> LayoutNode {
@@ -10,7 +10,12 @@ final class GalleryPhotoLayoutSpec: ModelLayoutSpec<URL> {
         }) { (imageView: UIImageView, _) in
             imageView.clipsToBounds = true
             imageView.contentMode = .scaleAspectFill
-            imageView.yy_setImage(with: model, options: .setImageWithFadeAnimation)
+
+            _ = Nuke.loadImage(
+                with: model,
+                options: ImageLoadingOptions(transition: .fadeIn(duration: 0.33)),
+                into: imageView
+            )
         }
 
         return LayoutNode(children: [imageNode], config: { node in

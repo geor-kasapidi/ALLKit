@@ -7,7 +7,6 @@ Pod::Spec.new do |s|
   s.author                     = { 'Georgy Kasapidi' => 'geor.kasapidi@icloud.com' }
   s.source                     = { :git => 'https://github.com/geor-kasapidi/ALLKit.git', :tag => "v#{s.version}" }
   s.platform                   = :ios, '9.0'
-  s.swift_version              = '5.0'
   s.requires_arc               = true
   s.default_subspecs           = 'ListKit', 'StringBuilder'
 

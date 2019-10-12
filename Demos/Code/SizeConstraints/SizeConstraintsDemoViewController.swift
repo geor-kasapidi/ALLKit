@@ -47,7 +47,6 @@ final class SizeConstraintsDemoViewController: UIViewController {
 
                 let listItem = ListItem(
                     id: id,
-                    model: id,
                     layoutSpec: EmojiLayoutSpec(model: emoji)
                 )
 

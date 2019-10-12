@@ -96,7 +96,6 @@ final class RootViewController: UIViewController {
             let items = menuRows.enumerated().map { (index, row) -> ListItem in
                 let rowItem = ListItem(
                     id: row.name,
-                    model: row.name,
                     layoutSpec: SelectableRowLayoutSpec(model: row.name)
                 )
 

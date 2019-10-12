@@ -27,7 +27,6 @@ final class MultiGalleriesViewController: UIViewController {
 
                 let listItem = ListItem(
                     id: name,
-                    model: name,
                     layoutSpec: GalleryItemLayoutSpec(model: GalleryItem(name: name, images: images))
                 )
 

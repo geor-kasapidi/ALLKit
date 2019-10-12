@@ -48,7 +48,6 @@ final class FeedViewController: UIViewController {
 
             let listItem = ListItem(
                 id: item.id,
-                model: item,
                 layoutSpec: FeedItemLayoutSpec(model: item)
             )
 
@@ -56,7 +55,6 @@ final class FeedViewController: UIViewController {
 
             let sepListItem = ListItem(
                 id: sep,
-                model: sep,
                 layoutSpec: FeedItemSeparatorLayoutSpec()
             )
 

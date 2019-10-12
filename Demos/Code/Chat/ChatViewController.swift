@@ -7,14 +7,10 @@ struct ChatColors {
     static let outgoing = #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1)
 }
 
-struct ChatMessage: Equatable {
+struct ChatMessage: Hashable {
     let id = UUID().uuidString
     let text: String
     let date: Date
-
-    static func ==(lhs: ChatMessage, rhs: ChatMessage) -> Bool {
-        return lhs.id == rhs.id
-    }
 }
 
 final class ChatViewController: UIViewController {
@@ -71,14 +67,12 @@ final class ChatViewController: UIViewController {
 
                 if n % 2 == 0 {
                     firstMessageItem = ListItem(
-                        id: message.id,
-                        model: message,
+                        id: message,
                         layoutSpec: IncomingTextMessageLayoutSpec(model: message)
                     )
                 } else {
                     firstMessageItem = ListItem(
-                        id: message.id,
-                        model: message,
+                        id: message,
                         layoutSpec: OutgoingTextMessageLayoutSpec(model: message)
                     )
                 }
@@ -98,14 +92,12 @@ final class ChatViewController: UIViewController {
 
                 if n % 2 == 0 {
                     secondMessageItem = ListItem(
-                        id: message.id,
-                        model: message,
+                        id: message,
                         layoutSpec: IncomingTextMessageLayoutSpec(model: message)
                     )
                 } else {
                     secondMessageItem = ListItem(
-                        id: message.id,
-                        model: message,
+                        id: message,
                         layoutSpec: OutgoingTextMessageLayoutSpec(model: message)
                     )
                 }

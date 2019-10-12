@@ -1,9 +1,18 @@
-public final class Diff {
-    private init() {}
+public enum Diff {
+    public enum Change: Hashable {
+        public typealias Index = Int
+
+        case delete(Index)
+        case insert(Index)
+        case update(Index, Index)
+        case move(Index, Index)
+    }
+
+    public typealias Changes = [Change]
 
     private final class Entry {
         var newCount: Int = 0
-        var oldIndices = ArraySlice<Int>()
+        var oldIndices: ArraySlice<Int> = []
     }
 
     private struct Record {
@@ -11,63 +20,35 @@ public final class Diff {
         var reference: Int?
     }
 
-    private static func calculate<ModelType, KeyType: Hashable>(_ oldArray: [ModelType],
-                                                                _ newArray: [ModelType],
-                                                                hash: (ModelType) -> KeyType,
-                                                                isEqual: (ModelType, ModelType) -> Bool) -> DiffResult {
-        if oldArray.isEmpty && newArray.isEmpty {
-            return DiffResult(
-                oldCount: 0,
-                newCount: 0,
-                deletes: [],
-                inserts: [],
-                updates: [],
-                moves: []
-            )
+    public static func between<T: Hashable>(_ oldItems: [T], and newItems: [T]) -> Changes {
+        if oldItems.isEmpty && newItems.isEmpty {
+            return []
         }
 
-        if oldArray.isEmpty {
-            return DiffResult(
-                oldCount: 0,
-                newCount: newArray.count,
-                deletes: [],
-                inserts: Array(newArray.indices),
-                updates: [],
-                moves: []
-            )
+        if oldItems.isEmpty {
+            return newItems.indices.map(Change.insert)
         }
 
-        if newArray.isEmpty {
-            return DiffResult(
-                oldCount: oldArray.count,
-                newCount: 0,
-                deletes: Array(oldArray.indices),
-                inserts: [],
-                updates: [],
-                moves: []
-            )
+        if newItems.isEmpty {
+            return oldItems.indices.map(Change.delete)
         }
 
         // -------------------------------------------------------
 
-        var table = [KeyType: Entry]()
+        var table = [T: Entry]()
 
-        var newRecords = newArray.map { object -> Record in
-            let key = hash(object)
-
-            let entry = table[key] ?? Entry()
+        var newRecords = newItems.map { item -> Record in
+            let entry = table[item] ?? Entry()
             entry.newCount += 1
-            table[key] = entry
+            table[item] = entry
 
             return Record(entry: entry, reference: nil)
         }
 
-        var oldRecords = oldArray.enumerated().map { (index, object) -> Record in
-            let key = hash(object)
-
-            let entry = table[key] ?? Entry()
+        var oldRecords = oldItems.enumerated().map { (index, item) -> Record in
+            let entry = table[item] ?? Entry()
             entry.oldIndices.append(index)
-            table[key] = entry
+            table[item] = entry
 
             return Record(entry: entry, reference: nil)
         }
@@ -89,7 +70,7 @@ public final class Diff {
 
         // -------------------------------------------------------
 
-        var deletes: [DiffResult.Index] = []
+        var changes: [Change] = []
 
         var offset = 0
 
@@ -97,7 +78,7 @@ public final class Diff {
             let deleteOffset = offset
 
             if oldRecord.reference == nil {
-                deletes.append(oldIndex)
+                changes.append(.delete(oldIndex))
 
                 offset += 1
             }
@@ -107,15 +88,11 @@ public final class Diff {
 
         // -------------------------------------------------------
 
-        var inserts: [DiffResult.Index] = []
-        var updates: [DiffResult.Update] = []
-        var moves: [DiffResult.Move] = []
-
         offset = 0
 
         newRecords.enumerated().forEach { (newIndex, newRecord) in
             guard let oldIndex = newRecord.reference else {
-                inserts.append(newIndex)
+                changes.append(.insert(newIndex))
 
                 offset += 1
 
@@ -126,42 +103,17 @@ public final class Diff {
             let insertOffset = offset
 
             let moved = (oldIndex - deleteOffset + insertOffset) != newIndex
-            let updated = !isEqual(newArray[newIndex], oldArray[oldIndex])
+            let updated = newItems[newIndex] != oldItems[oldIndex]
 
             if updated {
-                updates.append((oldIndex, newIndex))
-            }
-
-            if moved {
-                moves.append((oldIndex, newIndex))
+                changes.append(.update(oldIndex, oldIndex))
+            } else if moved {
+                changes.append(.move(oldIndex, newIndex))
             }
         }
 
         // -------------------------------------------------------
 
-        return DiffResult(
-            oldCount: oldArray.count,
-            newCount: newArray.count,
-            deletes: deletes,
-            inserts: inserts,
-            updates: updates,
-            moves: moves
-        )
-    }
-
-    // MARK: -
-
-    public static func between(_ oldArray: [Diffable], and newArray: [Diffable]) -> DiffResult {
-        return calculate(oldArray,
-                         newArray,
-                         hash: { $0.diffId },
-                         isEqual: { $0.isEqual(to: $1) })
-    }
-
-    public static func between<ModelType: Hashable>(_ oldArray: [ModelType], and newArray: [ModelType]) -> DiffResult {
-        return calculate(oldArray,
-                         newArray,
-                         hash: { $0 },
-                         isEqual: { $0 == $1 })
+        return changes
     }
 }

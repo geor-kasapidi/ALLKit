@@ -1,44 +1,52 @@
 PODS:
-  - ALLKit (1.0):
-    - ALLKit/ListKit (= 1.0)
-    - ALLKit/StringBuilder (= 1.0)
-  - ALLKit/Diff (1.0)
-  - ALLKit/FlexBox (1.0):
+  - ALLKit (1.1):
+    - ALLKit/ListKit (= 1.1)
+    - ALLKit/StringBuilder (= 1.1)
+  - ALLKit/Demos (1.1):
+    - Nuke
+    - PinIt
+  - ALLKit/Diff (1.1)
+  - ALLKit/FlexBox (1.1):
     - Yoga (= 1.14)
-  - ALLKit/Layout (1.0):
+  - ALLKit/Layout (1.1):
     - ALLKit/FlexBox
-  - ALLKit/ListKit (1.0):
+  - ALLKit/ListKit (1.1):
     - ALLKit/Diff
     - ALLKit/Layout
     - ALLKit/Support
-  - ALLKit/StringBuilder (1.0)
-  - ALLKit/Support (1.0):
+  - ALLKit/StringBuilder (1.1)
+  - ALLKit/Support (1.1):
     - ALLKit/Layout
-  - Nuke (8.2.0)
+  - ALLKit/Tests (1.1):
+    - ALLKit/Demos
+  - Nuke (8.3.0)
   - PinIt (1.0)
   - Yoga (1.14.0)
 
 DEPENDENCIES:
   - ALLKit (from `./`)
-  - Nuke
+  - ALLKit/Demos (from `./`)
+  - ALLKit/Tests (from `./`)
+  - Nuke (from `Nuke.podspec`)
   - PinIt
 
 SPEC REPOS:
   trunk:
-    - Nuke
     - PinIt
     - Yoga
 
 EXTERNAL SOURCES:
   ALLKit:
     :path: "./"
+  Nuke:
+    :podspec: Nuke.podspec
 
 SPEC CHECKSUMS:
-  ALLKit: 1f998b29cfac8bb89b3faca6012103b49c6e8323
-  Nuke: 0134d56b7c9dd3e69e9bce8bdcb37c2e0d55469f
+  ALLKit: af7caf5282b85c505d0f2735c1d3ce21019d78fc
+  Nuke: a98a5e8b3fa2975deba0d813a18b9344dcda0d94
   PinIt: 4590ce0526181463ff7b93eb2ff2fe66fc230999
   Yoga: cff67a400f6b74dc38eb0bad4f156673d9aa980c
 
-PODFILE CHECKSUM: 7a6ec6cff2fa30aa678ab47fa93fcf5cce3c48a4
+PODFILE CHECKSUM: d71c6c9aa1cf0167559d3cda7e2df1a07a13db52
 
-COCOAPODS: 1.8.0
+COCOAPODS: 1.8.3

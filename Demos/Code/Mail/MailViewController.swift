@@ -59,7 +59,6 @@ final class MailViewController: UIViewController {
             let items = rows.map { row -> ListItem in
                 let item = ListItem(
                     id: row.id,
-                    model: row,
                     layoutSpec: MailRowLayoutSpec(model: row)
                 )
 

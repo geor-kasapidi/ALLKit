@@ -38,4 +38,4 @@ Check out the demo project (requires `pod install`) and read the docs:
 
 ## Demo screenshots
 
-![Screens](allkit_screens.png)
+![Screens](Docs/allkit_screens.png)

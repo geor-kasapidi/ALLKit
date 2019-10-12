@@ -23,8 +23,7 @@ final class GalleryView: UIView {
             DispatchQueue.global().async { [weak self] in
                 let listItems = (self?.images ?? []).map { url -> ListItem in
                     ListItem(
-                        id: url.absoluteString,
-                        model: url,
+                        id: url,
                         layoutSpec: GalleryPhotoLayoutSpec(model: url)
                     )
                 }

@@ -70,8 +70,7 @@ final class AutoDiffViewController: UIViewController {
 
         let items = numbers.map { number -> ListItem in
             ListItem(
-                id: String(number),
-                model: number,
+                id: number,
                 layoutSpec: NumberLayoutSpec(model: number)
             )
         }

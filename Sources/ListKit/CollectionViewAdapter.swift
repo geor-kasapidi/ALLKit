@@ -91,78 +91,68 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
     public func set(items: [ListItem], animated: Bool = true, completion: ((Bool) -> Void)? = nil) {
         assert(Thread.isMainThread)
 
-        dataSource.set(newItems: items) { [weak self] diff in
-            if let diff = diff {
-                if animated {
-                    self?.apply(diff: diff, completion: completion)
-                } else {
-                    UIView.performWithoutAnimation {
-                        self?.apply(diff: diff, completion: completion)
-                    }
-                }
-            } else {
+        dataSource.set(newItems: items) { [weak self] changes in
+            if changes.isEmpty {
                 completion?(false)
+
+                return
+            }
+
+            if animated {
+                self?.performBatchUpdates(changes: changes, completion: completion)
+            } else {
+                UIView.performWithoutAnimation {
+                    self?.performBatchUpdates(changes: changes, completion: completion)
+                }
             }
         }
     }
 
     // MARK: -
 
-    private func apply(diff: DiffResult, completion: ((Bool) -> Void)?) {
-        if diff.oldCount == 0 || diff.newCount == 0 {
-            reloadData(completion: completion)
-
-            return
-        }
-
-        let deletes: Set<DiffResult.Index>
-        let inserts: Set<DiffResult.Index>
-        let moves: [DiffResult.Move]
-
-        if #available(iOS 11.0, *), settings.allowMovesInBatchUpdates {
-            deletes = Set(diff.deletes + diff.updates.map({ $0.old }))
-            inserts = Set(diff.inserts + diff.updates.map({ $0.new }))
-            moves = diff.moves.filter {
-                !deletes.contains($0.from) && !inserts.contains($0.to)
-            }
-        } else {
-            deletes = Set(diff.deletes + diff.updates.map({ $0.old }) + diff.moves.map({ $0.from }))
-            inserts = Set(diff.inserts + diff.updates.map({ $0.new }) + diff.moves.map({ $0.to }))
-            moves = []
-        }
-
-        performBatchUpdates(deletes: deletes,
-                            inserts: inserts,
-                            moves: moves,
-                            completion: completion)
-    }
-
     private func reloadData(completion: ((Bool) -> Void)?) {
         collectionView.performBatchUpdates({
-            collectionView.deleteSections(IndexSet(integer: 0))
-            collectionView.insertSections(IndexSet(integer: 0))
+            collectionView.deleteSections([0])
+            collectionView.insertSections([0])
         }, completion: completion)
     }
 
-    private func performBatchUpdates(deletes: Set<DiffResult.Index>,
-                                     inserts: Set<DiffResult.Index>,
-                                     moves: [DiffResult.Move],
-                                     completion: ((Bool) -> Void)?) {
+    private func performBatchUpdates(changes: Diff.Changes, completion: ((Bool) -> Void)?) {
+        let allowMoves: Bool
+
+        if #available(iOS 11.0, *), settings.allowMovesInBatchUpdates {
+            allowMoves = true
+        } else {
+            allowMoves = false
+        }
+
+        var deletes: [IndexPath] = []
+        var inserts: [IndexPath] = []
+        var moves: [(IndexPath, IndexPath)] = []
+
+        changes.forEach {
+            switch $0 {
+            case let .delete(index):
+                deletes.append([0, index])
+            case let .insert(index):
+                inserts.append([0, index])
+            case let .update(oldIndex, newIndex):
+                deletes.append([0, oldIndex])
+                inserts.append([0, newIndex])
+            case let .move(fromIndex, toIndex):
+                if allowMoves {
+                    moves.append(([0, fromIndex], [0, toIndex]))
+                } else {
+                    deletes.append([0, fromIndex])
+                    inserts.append([0, toIndex])
+                }
+            }
+        }
+
         collectionView.performBatchUpdates({
-            collectionView.deleteItems(at: deletes.map({
-                IndexPath(item: $0, section: 0)
-            }))
-
-            collectionView.insertItems(at: inserts.map({
-                IndexPath(item: $0, section: 0)
-            }))
-
-            moves.forEach({
-                collectionView.moveItem(
-                    at: IndexPath(item: $0.from, section: 0),
-                    to: IndexPath(item: $0.to, section: 0)
-                )
-            })
+            collectionView.deleteItems(at: deletes)
+            collectionView.insertItems(at: inserts)
+            moves.forEach(collectionView.moveItem)
         }, completion: completion)
     }
 
@@ -201,7 +191,7 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
     public func sizeForItem(at index: Int) -> CGSize {
         assert(Thread.isMainThread)
 
-        return dataSource.model(at: index).layout.size
+        return dataSource.models[index].layout.size
     }
 
     // MARK: - UICollectionViewDelegateFlowLayout
@@ -217,7 +207,7 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
     }
 
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return dataSource.modelsCount
+        return dataSource.models.count
     }
 
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -225,17 +215,17 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
 
         let index = indexPath.item
 
-        let model = dataSource.model(at: index)
+        let model = dataSource.models[index]
 
         let viewToAdd: UIView
 
-        if let swipeActions = model.listItem.swipeActions {
+        if let swipeActions = model.item.swipeActions {
             viewToAdd = SwipeView(contentLayout: model.layout, actions: swipeActions)
         } else {
             viewToAdd = model.layout.makeView()
         }
 
-        if let didTap = model.listItem.didTap {
+        if let didTap = model.item.didTap {
             viewToAdd.all_addGestureRecognizer { [weak viewToAdd] (_: UITapGestureRecognizer) in
                 viewToAdd.flatMap({
                     didTap($0, index)
@@ -248,13 +238,13 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
             cell.contentView.addSubview(viewToAdd)
         }
 
-        model.listItem.willShow?(viewToAdd, index)
+        model.item.willShow?(viewToAdd, index)
 
         return cell
     }
 
     public func collectionView(_ collectionView: UICollectionView, canMoveItemAt indexPath: IndexPath) -> Bool {
-        return settings.allowInteractiveMovement && dataSource.model(at: indexPath.item).listItem.canMove
+        return settings.allowInteractiveMovement && dataSource.models[indexPath.item].item.canMove
     }
 
     public func collectionView(_ collectionView: UICollectionView, moveItemAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
@@ -263,7 +253,7 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
 
         dataSource.moveItem(from: sourceIndex, to: destinationIndex)
 
-        dataSource.model(at: destinationIndex).listItem.didMove?(sourceIndex, destinationIndex)
+        dataSource.models[destinationIndex].item.didMove?(sourceIndex, destinationIndex)
     }
 
     // MARK: - UIScrollViewDelegate

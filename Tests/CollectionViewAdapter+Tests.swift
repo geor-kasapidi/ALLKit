@@ -57,7 +57,7 @@ class CollectionViewAdapterTests: XCTestCase {
 
         do {
             let id = UUID().uuidString
-            let li = ListItem(id: id, model: id, layoutSpec: TestLayoutSpec())
+            let li = ListItem(id: id, layoutSpec: TestLayoutSpec())
 
             items.append(li)
         }
@@ -95,7 +95,7 @@ class CollectionViewAdapterTests: XCTestCase {
         let items: [ListItem] = (0..<1000).map { _ in
             let id = UUID().uuidString
 
-            let item = ListItem(id: id, model: id, layoutSpec: TestLayoutSpec())
+            let item = ListItem(id: id, layoutSpec: TestLayoutSpec())
             item.willShow = { _, _ in
                 events.insert("willDisplay")
             }

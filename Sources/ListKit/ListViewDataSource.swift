@@ -1,34 +1,105 @@
 import Foundation
 import UIKit
 
-typealias CellModel = (layout: Layout, listItem: ListItem)
-
 private extension ListItem {
     func makeLayout(_ sizeConstraints: SizeConstraints) -> Layout {
-        let sc = sizeConstraintsModifier?(sizeConstraints) ?? sizeConstraints
-
-        return layoutSpec.makeLayoutWith(sizeConstraints: sc)
+        return layoutSpec.makeLayoutWith(sizeConstraints: sizeConstraintsModifier?(sizeConstraints) ?? sizeConstraints)
     }
 }
 
 private extension Array {
-    mutating func move(from sourceIndex: Index, to destinationIndex: Index) {
-        insert(remove(at: sourceIndex), at: destinationIndex)
+    mutating func move(from i: Index, to j: Index) {
+        insert(remove(at: i), at: j)
+    }
+}
+
+private func onMainThread(_ closure: @escaping () -> Void) {
+    if Thread.isMainThread {
+        closure()
+    } else {
+        DispatchQueue.main.async(execute: closure)
+    }
+}
+
+typealias CellModel = (item: ListItem, layout: Layout)
+
+private enum MakeModels {
+    static func from(sizeConstraints: SizeConstraints,
+                     items: [ListItem],
+                     async: Bool,
+                     queue: DispatchQueue,
+                     completion: (([CellModel]) -> Void)?) {
+        if async {
+            queue.async {
+                let models = items.map {
+                    ($0, $0.makeLayout(sizeConstraints))
+                }
+
+                completion?(models)
+            }
+        } else {
+            let models = queue.sync {
+                return items.map {
+                    ($0, $0.makeLayout(sizeConstraints))
+                }
+            }
+
+            completion?(models)
+        }
+    }
+
+    static func from(sizeConstraints: SizeConstraints,
+                     newItems: [ListItem],
+                     oldItems: [ListItem],
+                     oldModels: [CellModel],
+                     queue: DispatchQueue,
+                     completion: (([CellModel], Diff.Changes) -> Void)?) {
+        queue.async {
+            let changes = Diff.between(oldItems, and: newItems)
+
+            if changes.isEmpty {
+                completion?([], [])
+
+                return
+            }
+
+            var layouts = oldModels.reduce(into: [ListItem: Layout]()) {
+                $0[$1.item] = $1.layout
+            }
+
+            changes.forEach {
+                switch $0 {
+                case let .delete(index):
+                    layouts[oldItems[index]] = nil
+                case let .update(index, _):
+                    layouts[oldItems[index]] = nil
+                case .insert, .move:
+                    break
+                }
+            }
+
+            let newModels = newItems.map {
+                ($0, layouts[$0] ?? $0.makeLayout(sizeConstraints))
+            }
+
+            completion?(newModels, changes)
+        }
     }
 }
 
 final class ListViewDataSource {
-    private let internalQueue = DispatchQueue(label: "ALLKit.ListViewDataSource.internalQueue")
+    private let queue = DispatchQueue(label: "ALLKit.ListViewDataSource.queue")
 
-    private var layoutCache: [String: Layout] = [:]
-    private var sizeConstraints: SizeConstraints?
+    private var generation: UInt64 = 0
+    private var sizeConstraints = SizeConstraints()
     private var items: [ListItem] = []
-    private var models: [CellModel] = []
+
+    private(set) var models: [CellModel] = []
 
     // MARK: -
 
     func set(newSizeConstraints: SizeConstraints, async: Bool, completion: ((Bool) -> Void)?) {
-        guard newSizeConstraints != sizeConstraints else {
+        guard !newSizeConstraints.isEmpty, newSizeConstraints != sizeConstraints else {
             completion?(false)
 
             return
@@ -36,97 +107,61 @@ final class ListViewDataSource {
 
         sizeConstraints = newSizeConstraints
 
-        let items = self.items
+        generation += 1
+        let g = generation
 
-        if async {
-            internalQueue.async {
-                self.layoutCache.removeAll()
+        MakeModels.from(sizeConstraints: sizeConstraints, items: items, async: async, queue: queue) { [weak self] models in
+            onMainThread {
+                self.flatMap {
+                    guard $0.generation == g else {
+                        return
+                    }
 
-                let models = self.makeModelsFrom(items, newSizeConstraints)
-
-                DispatchQueue.main.async {
-                    self.models = models
+                    $0.models = models
 
                     completion?(true)
                 }
             }
-        } else {
-            models = internalQueue.sync {
-                self.layoutCache.removeAll()
-
-                return self.makeModelsFrom(items, newSizeConstraints)
-            }
-
-            completion?(true)
         }
     }
 
-    func set(newItems: [ListItem], completion: ((DiffResult?) -> Void)?) {
-        let oldItems = self.items
-        self.items = newItems
+    func set(newItems: [ListItem], completion: ((Diff.Changes) -> Void)?) {
+        let oldItems: [ListItem]
 
-        guard let sizeConstraints = sizeConstraints else {
-            completion?(nil)
+        (oldItems, items) = (items, newItems)
+
+        guard !sizeConstraints.isEmpty else {
+            completion?([])
 
             return
         }
 
-        internalQueue.async {
-            let diff = Diff.between(oldItems, and: newItems)
+        generation += 1
+        let g = generation
 
-            if diff.changesCount == 0 {
-                DispatchQueue.main.async {
-                    completion?(nil)
+        MakeModels.from(sizeConstraints: sizeConstraints, newItems: newItems, oldItems: oldItems, oldModels: models, queue: queue) { [weak self] (models, changes) in
+            onMainThread {
+                self.flatMap {
+                    guard $0.generation == g else {
+                        return
+                    }
+
+                    if !changes.isEmpty {
+                        $0.models = models
+                    }
+
+                    completion?(changes)
                 }
-
-                return
-            }
-
-            (diff.deletes + diff.updates.map({ $0.old })).forEach { index in
-                let item = oldItems[index]
-
-                self.layoutCache[item.diffId] = nil
-            }
-
-            let models = self.makeModelsFrom(newItems, sizeConstraints)
-
-            DispatchQueue.main.async {
-                self.models = models
-
-                completion?(diff)
             }
         }
     }
 
-    // MARK: -
-
-    private func makeModelsFrom(_ listItems: [ListItem],
-                                _ sizeConstraints: SizeConstraints) -> [CellModel] {
-        return listItems.map { listItem -> CellModel in
-            if let layout = layoutCache[listItem.diffId] {
-                return (layout, listItem)
-            }
-
-            let layout = listItem.makeLayout(sizeConstraints)
-            layoutCache[listItem.diffId] = layout
-            return (layout, listItem)
+    func moveItem(from i: Int, to j: Int) {
+        guard items.count == models.count else {
+            return
         }
-    }
 
-    // MARK: -
-
-    func moveItem(from sourceIndex: Int, to destinationIndex: Int) {
-        models.move(from: sourceIndex, to: destinationIndex)
-        items.move(from: sourceIndex, to: destinationIndex)
-    }
-
-    // MARK: -
-
-    var modelsCount: Int {
-        return models.count
-    }
-
-    func model(at index: Int) -> CellModel {
-        return models[index]
+        models.move(from: i, to: j)
+        items.move(from: i, to: j)
     }
 }

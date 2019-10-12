@@ -48,8 +48,7 @@ final class MovementViewController: UIViewController {
     private func updateItems() {
         let items = (0..<9).map { number -> ListItem in
             let listItem = ListItem(
-                id: String(number),
-                model: number,
+                id: number,
                 layoutSpec: NumberLayoutSpec(model: number)
             )
 

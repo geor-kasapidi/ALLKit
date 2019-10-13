@@ -79,30 +79,20 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
     public func set(sizeConstraints: SizeConstraints, async: Bool = false, completion: ((Bool) -> Void)? = nil) {
         assert(Thread.isMainThread)
 
-        dataSource.set(newSizeConstraints: sizeConstraints, async: async) { [weak self] success in
-            if success {
-                self?.reloadData(completion: completion)
-            } else {
-                completion?(false)
-            }
+        dataSource.set(newSizeConstraints: sizeConstraints, async: async) { [weak self] updateType in
+            self?.update(type: updateType, completion)
         }
     }
 
     public func set(items: [ListItem], animated: Bool = true, completion: ((Bool) -> Void)? = nil) {
         assert(Thread.isMainThread)
 
-        dataSource.set(newItems: items) { [weak self] changes in
-            if changes.isEmpty {
-                completion?(false)
-
-                return
-            }
-
+        dataSource.set(newItems: items) { [weak self] updateType in
             if animated {
-                self?.performBatchUpdates(changes: changes, completion: completion)
+                self?.update(type: updateType, completion)
             } else {
                 UIView.performWithoutAnimation {
-                    self?.performBatchUpdates(changes: changes, completion: completion)
+                    self?.update(type: updateType, completion)
                 }
             }
         }
@@ -110,50 +100,53 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
 
     // MARK: -
 
-    private func reloadData(completion: ((Bool) -> Void)?) {
-        collectionView.performBatchUpdates({
-            collectionView.deleteSections([0])
-            collectionView.insertSections([0])
-        }, completion: completion)
-    }
+    private func update(type: UpdateType?, _ completion: ((Bool) -> Void)?) {
+        switch type {
+        case .reload:
+            collectionView.performBatchUpdates({
+                collectionView.deleteSections([0])
+                collectionView.insertSections([0])
+            }, completion: completion)
+        case let .patch(changes):
+            let allowMoves: Bool
 
-    private func performBatchUpdates(changes: Diff.Changes, completion: ((Bool) -> Void)?) {
-        let allowMoves: Bool
+            if #available(iOS 11.0, *), settings.allowMovesInBatchUpdates {
+                allowMoves = true
+            } else {
+                allowMoves = false
+            }
 
-        if #available(iOS 11.0, *), settings.allowMovesInBatchUpdates {
-            allowMoves = true
-        } else {
-            allowMoves = false
-        }
+            var deletes: [IndexPath] = []
+            var inserts: [IndexPath] = []
+            var moves: [(IndexPath, IndexPath)] = []
 
-        var deletes: [IndexPath] = []
-        var inserts: [IndexPath] = []
-        var moves: [(IndexPath, IndexPath)] = []
-
-        changes.forEach {
-            switch $0 {
-            case let .delete(index):
-                deletes.append([0, index])
-            case let .insert(index):
-                inserts.append([0, index])
-            case let .update(oldIndex, newIndex):
-                deletes.append([0, oldIndex])
-                inserts.append([0, newIndex])
-            case let .move(fromIndex, toIndex):
-                if allowMoves {
-                    moves.append(([0, fromIndex], [0, toIndex]))
-                } else {
-                    deletes.append([0, fromIndex])
-                    inserts.append([0, toIndex])
+            changes.forEach {
+                switch $0 {
+                case let .delete(index):
+                    deletes.append([0, index])
+                case let .insert(index):
+                    inserts.append([0, index])
+                case let .update(oldIndex, newIndex):
+                    deletes.append([0, oldIndex])
+                    inserts.append([0, newIndex])
+                case let .move(fromIndex, toIndex):
+                    if allowMoves {
+                        moves.append(([0, fromIndex], [0, toIndex]))
+                    } else {
+                        deletes.append([0, fromIndex])
+                        inserts.append([0, toIndex])
+                    }
                 }
             }
-        }
 
-        collectionView.performBatchUpdates({
-            collectionView.deleteItems(at: deletes)
-            collectionView.insertItems(at: inserts)
-            moves.forEach(collectionView.moveItem)
-        }, completion: completion)
+            collectionView.performBatchUpdates({
+                collectionView.deleteItems(at: deletes)
+                collectionView.insertItems(at: inserts)
+                moves.forEach(collectionView.moveItem)
+            }, completion: completion)
+        case .none:
+            completion?(false)
+        }
     }
 
     // MARK: -

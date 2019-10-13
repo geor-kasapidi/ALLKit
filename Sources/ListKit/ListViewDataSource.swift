@@ -87,6 +87,11 @@ private enum MakeModels {
     }
 }
 
+enum UpdateType {
+    case reload
+    case patch(Diff.Changes)
+}
+
 final class ListViewDataSource {
     private let queue = DispatchQueue(label: "ALLKit.ListViewDataSource.queue")
 
@@ -98,9 +103,9 @@ final class ListViewDataSource {
 
     // MARK: -
 
-    func set(newSizeConstraints: SizeConstraints, async: Bool, completion: ((Bool) -> Void)?) {
+    func set(newSizeConstraints: SizeConstraints, async: Bool, completion: ((UpdateType?) -> Void)?) {
         guard !newSizeConstraints.isEmpty, newSizeConstraints != sizeConstraints else {
-            completion?(false)
+            completion?(nil)
 
             return
         }
@@ -112,26 +117,28 @@ final class ListViewDataSource {
 
         MakeModels.from(sizeConstraints: sizeConstraints, items: items, async: async, queue: queue) { [weak self] models in
             onMainThread {
-                self.flatMap {
-                    guard $0.generation == g else {
-                        return
-                    }
+                guard let self = self else { return }
 
-                    $0.models = models
+                guard self.generation == g else {
+                    completion?(nil)
 
-                    completion?(true)
+                    return
                 }
+
+                self.models = models
+
+                completion?(.reload)
             }
         }
     }
 
-    func set(newItems: [ListItem], completion: ((Diff.Changes) -> Void)?) {
+    func set(newItems: [ListItem], completion: ((UpdateType?) -> Void)?) {
         let oldItems: [ListItem]
 
         (oldItems, items) = (items, newItems)
 
         guard !sizeConstraints.isEmpty else {
-            completion?([])
+            completion?(nil)
 
             return
         }
@@ -141,16 +148,22 @@ final class ListViewDataSource {
 
         MakeModels.from(sizeConstraints: sizeConstraints, newItems: newItems, oldItems: oldItems, oldModels: models, queue: queue) { [weak self] (models, changes) in
             onMainThread {
-                self.flatMap {
-                    guard $0.generation == g else {
-                        return
-                    }
+                guard let self = self else { return }
 
-                    if !changes.isEmpty {
-                        $0.models = models
-                    }
+                guard self.generation == g, !changes.isEmpty else {
+                    completion?(nil)
 
-                    completion?(changes)
+                    return
+                }
+
+                let wasEmpty = self.models.isEmpty
+
+                self.models = models
+
+                if wasEmpty || models.isEmpty {
+                    completion?(.reload)
+                } else {
+                    completion?(.patch(changes))
                 }
             }
         }

@@ -8,7 +8,7 @@ struct SomeModel {
 }
 
 final class SomeLayoutSpec: ModelLayoutSpec<SomeModel> {
-    override func makeNodeFrom(model: SomeModel, sizeConstraints: SizeConstraints) -> LayoutNode {
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
         if model.foo {
             return LayoutNode { (imageView: UIImageView, _) in
 
@@ -23,10 +23,10 @@ final class SomeLayoutSpec: ModelLayoutSpec<SomeModel> {
 
 ...
 
-let sizeConstraints = SizeConstraints(width: UIScreen.main.bounds.width, height: .nan)
+let boundingDimensions = CGSize(width: UIScreen.main.bounds.width, height: .nan).layoutDimensions
 
-let layout1 = SomeLayoutSpec(model: SomeModel(foo: true)).makeLayoutWith(sizeConstraints: sizeConstraints)
-let layout2 = SomeLayoutSpec(model: SomeModel(foo: false)).makeLayoutWith(sizeConstraints: sizeConstraints)
+let layout1 = SomeLayoutSpec(model: SomeModel(foo: true)).makeLayoutWith(boundingDimensions: boundingDimensions)
+let layout2 = SomeLayoutSpec(model: SomeModel(foo: false)).makeLayoutWith(boundingDimensions: boundingDimensions)
 
 let view = UIView()
 
@@ -46,13 +46,9 @@ Or just create a view from scratch without reuse. But in this case, you will not
 Reuse is a good optimization because you can divide view configuration into one-time and multiple actions:
 
 ```swift
-let imageNode = LayoutNode { (imageView: UIImageView, isNew) in
+let imageNode = LayoutNode(...) { (imageView: UIImageView, isNew) in
     if isNew /* if view is only created */ {
         imageView.contentMode = .scaleAspectFill
-        imageView.layer.cornerRadius = 24
-        imageView.layer.masksToBounds = true
-        imageView.layer.borderWidth = 1
-        imageView.layer.borderColor = UIColor.lightGray.cgColor
         imageView.backgroundColor = UIColor.lightGray
     }
 

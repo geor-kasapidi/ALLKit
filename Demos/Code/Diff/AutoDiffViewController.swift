@@ -38,7 +38,7 @@ final class AutoDiffViewController: UIViewController {
             )
 
             AdapterControlsLayoutSpec(model: model)
-                .makeLayoutWith(sizeConstraints: SizeConstraints(width: 300, height: 40))
+                .makeLayoutWith(boundingDimensions: CGSize(width: 300, height: 40).layoutDimensions)
                 .setup(in: controlsView)
 
             setToolbarItems([UIBarButtonItem(customView: controlsView)], animated: false)
@@ -62,7 +62,7 @@ final class AutoDiffViewController: UIViewController {
 
         let size = (view.bounds.width - CGFloat(numberOfColumns + 1) * Consts.spacing) / CGFloat(numberOfColumns) - 1
 
-        adapter.set(sizeConstraints: SizeConstraints(width: size, height: size))
+        adapter.set(boundingDimensions: CGSize(width: size, height: size).layoutDimensions)
     }
 
     private func generateItems() {

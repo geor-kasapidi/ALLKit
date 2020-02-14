@@ -4,7 +4,7 @@ import ALLKit
 import yoga
 
 final class IncomingTextMessageLayoutSpec: ModelLayoutSpec<ChatMessage> {
-    override func makeNodeFrom(model: ChatMessage, sizeConstraints: SizeConstraints) -> LayoutNode {
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
         let attributedText = model.text.attributed()
             .font(.systemFont(ofSize: 14))
             .foregroundColor(UIColor.black)
@@ -16,12 +16,8 @@ final class IncomingTextMessageLayoutSpec: ModelLayoutSpec<ChatMessage> {
             .foregroundColor(UIColor.black.withAlphaComponent(0.6))
             .make()
 
-        let tailNode = LayoutNode(config: { node in
-            node.position = .absolute
-            node.width = 20
-            node.height = 18
-            node.bottom = 0
-            node.left = -6
+        let tailNode = LayoutNode({
+            $0.isOverlay(true).width(20).height(18).position(.bottom(0), .left(-6))
         }) { (imageView: UIImageView, _) in
             imageView.superview?.sendSubviewToBack(imageView)
             imageView.image = UIImage(named: "tail")?.withRenderingMode(.alwaysTemplate)
@@ -29,38 +25,29 @@ final class IncomingTextMessageLayoutSpec: ModelLayoutSpec<ChatMessage> {
             imageView.transform = CGAffineTransform(scaleX: -1, y: 1)
         }
 
-        let textNode = LayoutNode(sizeProvider: attributedText, config: { node in
-            node.flexShrink = 1
-            node.marginRight = 8
+        let textNode = LayoutNode(sizeProvider: attributedText, {
+            $0.flexShrink(1).margin(.right(8))
         }) { (label: AsyncLabel, _) in
             label.stringDrawing = attributedText
         }
 
-        let dateNode = LayoutNode(sizeProvider: attributedDateText, config: nil) { (label: UILabel, _) in
+        let dateNode = LayoutNode(sizeProvider: attributedDateText) { (label: UILabel, _) in
             label.attributedText = attributedDateText
         }
 
-        let infoNode = LayoutNode(children: [dateNode], config: { node in
-            node.marginBottom = 2
-            node.flexDirection = .row
-            node.alignItems = .center
-            node.alignSelf = .flexEnd
+        let infoNode = LayoutNode(children: [dateNode], {
+            $0.margin(.bottom(2)).flexDirection(.row).alignItems(.center).alignSelf(.flexEnd)
         })
 
-        let backgroundNode = LayoutNode(children: [textNode, tailNode, infoNode], config: { node in
-            node.flexDirection = .row
-            node.alignItems = .center
-            node.padding(top: 8, left: 12, bottom: 8, right: 12)
-            node.margin(top: nil, left: 16, bottom: 8, right: 30%)
-            node.minHeight = 36
+        let backgroundNode = LayoutNode(children: [textNode, tailNode, infoNode], {
+            $0.flexDirection(.row).alignItems(.center).padding(.vertical(8), .horizontal(12)).margin(.left(16), .bottom(8), .right(.percent(30))).min(.height(36))
         }) { (view: UIView, _) in
             view.backgroundColor = ChatColors.incoming
             view.layer.cornerRadius = 18
         }
 
-        return LayoutNode(children: [backgroundNode], config: { node in
-            node.alignItems = .center
-            node.flexDirection = .row
+        return LayoutNode(children: [backgroundNode], {
+            $0.alignItems(.center).flexDirection(.row)
         })
     }
 }

@@ -4,7 +4,7 @@ import ALLKit
 import Nuke
 
 final class PortraitProfileLayoutSpec: ModelLayoutSpec<UserProfile> {
-    override func makeNodeFrom(model: UserProfile, sizeConstraints: SizeConstraints) -> LayoutNode {
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
         let attributedName = model.name.attributed()
             .font(.boldSystemFont(ofSize: 24))
             .foregroundColor(UIColor.black)
@@ -17,10 +17,8 @@ final class PortraitProfileLayoutSpec: ModelLayoutSpec<UserProfile> {
             .alignment(.justified)
             .make()
 
-        let avatarNode = LayoutNode(config: { node in
-            node.height = 100
-            node.width = 100
-            node.marginBottom = 24
+        let avatarNode = LayoutNode({
+            $0.height(100).width(100).margin(.bottom(24))
         }) { (imageView: UIImageView, isNew) in
             if isNew {
                 imageView.backgroundColor = #colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1)
@@ -28,7 +26,7 @@ final class PortraitProfileLayoutSpec: ModelLayoutSpec<UserProfile> {
                 imageView.layer.masksToBounds = true
                 imageView.contentMode = .scaleAspectFill
 
-                model.avatar.flatMap {
+                self.model.avatar.flatMap {
                     _ = Nuke.loadImage(
                         with: $0,
                         options: ImageLoadingOptions(transition: .fadeIn(duration: 0.33)),
@@ -38,8 +36,8 @@ final class PortraitProfileLayoutSpec: ModelLayoutSpec<UserProfile> {
             }
         }
 
-        let nameNode = LayoutNode(sizeProvider: attributedName, config: { node in
-            node.marginBottom = 24
+        let nameNode = LayoutNode(sizeProvider: attributedName, {
+            $0.margin(.bottom(24))
         }) { (label: UILabel, isNew) in
             if isNew {
                 label.numberOfLines = 0
@@ -47,23 +45,21 @@ final class PortraitProfileLayoutSpec: ModelLayoutSpec<UserProfile> {
             }
         }
 
-        let descriptionNode = LayoutNode(sizeProvider: attributedDescription, config: nil) { (label: UILabel, isNew) in
+        let descriptionNode = LayoutNode(sizeProvider: attributedDescription) { (label: UILabel, isNew) in
             if isNew {
                 label.numberOfLines = 0
                 label.attributedText = attributedDescription
             }
         }
 
-        return LayoutNode(children: [avatarNode, nameNode, descriptionNode], config: { node in
-            node.flexDirection = .column
-            node.padding(all: 24)
-            node.alignItems = .center
+        return LayoutNode(children: [avatarNode, nameNode, descriptionNode], {
+            $0.flexDirection(.column).padding(.all(24)).alignItems(.center)
         })
     }
 }
 
 final class LandscapeProfileLayoutSpec: ModelLayoutSpec<UserProfile> {
-    override func makeNodeFrom(model: UserProfile, sizeConstraints: SizeConstraints) -> LayoutNode {
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
         let attributedName = model.name.attributed()
             .font(.boldSystemFont(ofSize: 24))
             .foregroundColor(UIColor.black)
@@ -76,52 +72,45 @@ final class LandscapeProfileLayoutSpec: ModelLayoutSpec<UserProfile> {
             .alignment(.justified)
             .make()
 
-        let avatarNode = LayoutNode(config: { node in
-            node.height = 100
-            node.width = 100
-            node.marginBottom = 24
-        }) { (imageView: UIImageView, isNew) in
-            if isNew {
-                imageView.backgroundColor = #colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1)
-                imageView.layer.cornerRadius = 50
-                imageView.layer.masksToBounds = true
-                imageView.contentMode = .scaleAspectFill
+        return LayoutNodeBuilder().layout {
+            $0.flexDirection(.row).padding(.all(24))
+        }.body {
+            LayoutNodeBuilder().layout {
+                $0.flexDirection(.column).alignItems(.center).margin(.right(24))
+            }.body {
+                LayoutNodeBuilder().layout {
+                    $0.height(100).width(100).margin(.bottom(24))
+                }.view { (imageView: UIImageView, isNew) in
+                    if isNew {
+                        imageView.backgroundColor = #colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1)
+                        imageView.layer.cornerRadius = 50
+                        imageView.layer.masksToBounds = true
+                        imageView.contentMode = .scaleAspectFill
 
-                model.avatar.flatMap {
-                    _ = Nuke.loadImage(
-                        with: $0,
-                        options: ImageLoadingOptions(transition: .fadeIn(duration: 0.33)),
-                        into: imageView
-                    )
+                        self.model.avatar.flatMap {
+                            _ = Nuke.loadImage(
+                                with: $0,
+                                options: ImageLoadingOptions(transition: .fadeIn(duration: 0.33)),
+                                into: imageView
+                            )
+                        }
+                    }
+                }
+                LayoutNode(sizeProvider: attributedName) { (label: UILabel, isNew) in
+                    if isNew {
+                        label.numberOfLines = 0
+                        label.attributedText = attributedName
+                    }
+                }
+            }
+            LayoutNodeBuilder().layout(sizeProvider: attributedDescription) {
+                $0.flex(1)
+            }.view { (label: UILabel, isNew) in
+                if isNew {
+                    label.numberOfLines = 0
+                    label.attributedText = attributedDescription
                 }
             }
         }
-
-        let nameNode = LayoutNode(sizeProvider: attributedName, config: nil) { (label: UILabel, isNew) in
-            if isNew {
-                label.numberOfLines = 0
-                label.attributedText = attributedName
-            }
-        }
-
-        let descriptionNode = LayoutNode(sizeProvider: attributedDescription, config: { node in
-            node.flex = 1
-        }) { (label: UILabel, isNew) in
-            if isNew {
-                label.numberOfLines = 0
-                label.attributedText = attributedDescription
-            }
-        }
-
-        let leftNode = LayoutNode(children: [avatarNode, nameNode], config: { node in
-            node.flexDirection = .column
-            node.alignItems = .center
-            node.marginRight = 24
-        })
-
-        return LayoutNode(children: [leftNode, descriptionNode], config: { node in
-            node.flexDirection = .row
-            node.padding(all: 24)
-        })
     }
 }

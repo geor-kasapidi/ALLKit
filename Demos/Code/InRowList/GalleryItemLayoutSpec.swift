@@ -3,27 +3,27 @@ import UIKit
 import ALLKit
 
 final class GalleryItemLayoutSpec: ModelLayoutSpec<GalleryItem> {
-    override func makeNodeFrom(model: GalleryItem, sizeConstraints: SizeConstraints) -> LayoutNode {
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
         let title = model.name.attributed()
             .font(UIFont.boldSystemFont(ofSize: 20))
             .foregroundColor(UIColor.black)
             .make()
 
-        let titleNode = LayoutNode(sizeProvider: title, config: { node in
-            node.margin(all: 16)
+        let titleNode = LayoutNode(sizeProvider: title, {
+            $0.margin(.all(16))
         }) { (label: UILabel, _) in
             label.numberOfLines = 0
             label.attributedText = title
         }
 
-        let galleryNode = LayoutNode(config: { node in
-            node.height = 128
+        let galleryNode = LayoutNode({
+            $0.height(128)
         }) { (view: GalleryView, _) in
-            view.images = model.images
+            view.images = self.model.images
         }
 
-        return LayoutNode(children: [titleNode, galleryNode], config: { node in
-            node.flexDirection = .column
+        return LayoutNode(children: [titleNode, galleryNode], {
+            $0.flexDirection(.column)
         })
     }
 }

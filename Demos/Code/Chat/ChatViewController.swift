@@ -51,7 +51,12 @@ final class ChatViewController: UIViewController {
 
         adapter.collectionView.frame = view.bounds
 
-        adapter.set(sizeConstraints: SizeConstraints(width: view.bounds.width))
+        adapter.set(
+            boundingDimensions: CGSize(
+                width: view.bounds.width,
+                height: .nan
+            ).layoutDimensions
+        )
     }
 
     private func generateItems() -> [ListItem] {
@@ -77,9 +82,9 @@ final class ChatViewController: UIViewController {
                     )
                 }
 
-                firstMessageItem.willShow = { view, _ in
+                firstMessageItem.willDisplay = { view, _ in
                     UIView.performWithoutAnimation {
-                        view.transform = CGAffineTransform(rotationAngle: CGFloat.pi)
+                        view?.transform = CGAffineTransform(rotationAngle: CGFloat.pi)
                     }
                 }
             }
@@ -102,9 +107,9 @@ final class ChatViewController: UIViewController {
                     )
                 }
 
-                secondMessageItem.willShow = { view, _ in
+                secondMessageItem.willDisplay = { view, _ in
                     UIView.performWithoutAnimation {
-                        view.transform = CGAffineTransform(rotationAngle: CGFloat.pi)
+                        view?.transform = CGAffineTransform(rotationAngle: CGFloat.pi)
                     }
                 }
             }

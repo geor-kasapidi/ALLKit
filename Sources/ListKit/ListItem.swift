@@ -12,12 +12,13 @@ public final class ListItem: Hashable {
 
     // MARK: - Public properties
 
-    public var sizeConstraintsModifier: ((SizeConstraints) -> SizeConstraints)?
+    public var boundingDimensionsModifier: LayoutDimensions<CGFloat>.Modifier?
     public var swipeActions: SwipeActions?
+    public var setup: ((UIView, Int) -> Void)?
     public var canMove: Bool = false
     public var didMove: ((Int, Int) -> Void)?
-    public var didTap: ((UIView, Int) -> Void)?
-    public var willShow: ((UIView, Int) -> Void)?
+    public var willDisplay: ((UIView?, Int) -> Void)?
+    public var didEndDisplaying: ((UIView?, Int) -> Void)?
 
     // MARK: - Hashable & Equatable
 
@@ -26,10 +27,12 @@ public final class ListItem: Hashable {
     }
 
     public static func == (lhs: ListItem, rhs: ListItem) -> Bool {
-        if lhs === rhs {
-            return true
-        }
+        return lhs === rhs ? true : lhs.id == rhs.id
+    }
+}
 
-        return lhs.id == rhs.id
+extension ListItem {
+    func makeLayoutWith(_ dimensions: LayoutDimensions<CGFloat>) -> Layout {
+        layoutSpec.makeLayoutWith(boundingDimensions: boundingDimensionsModifier.flatMap(dimensions.modify) ?? dimensions)
     }
 }

@@ -1,11 +1,11 @@
-# ALLKit [![Build Status](https://travis-ci.org/geor-kasapidi/ALLKit.svg?branch=master)](https://travis-ci.org/geor-kasapidi/ALLKit) ![PodL](https://img.shields.io/cocoapods/l/ALLKit.svg) ![PodV](https://img.shields.io/cocoapods/v/ALLKit.svg) ![Swift](https://img.shields.io/badge/swift-5-orange.svg) ![iOS](https://img.shields.io/badge/iOS-9+-blue.svg)
+# ALLKit [![Build Status](https://travis-ci.org/geor-kasapidi/ALLKit.svg?branch=master)](https://travis-ci.org/geor-kasapidi/ALLKit) ![PodL](https://img.shields.io/cocoapods/l/ALLKit.svg) ![PodV](https://img.shields.io/cocoapods/v/ALLKit.svg) ![Swift](https://img.shields.io/badge/swift-5.1-orange.svg) ![iOS](https://img.shields.io/badge/iOS-9+-blue.svg)
 
 A declarative data-driven framework for rapid development of smooth UI
 
 * **Stable and safe** - production ready solution used in some popular apps
-* **Easy to use** - simple and clean API
-* **Modular** - use only components you need (see [podspec](ALLKit.podspec))
+* **Easy to use** - simple and clean API using modern Swift features like function builder
 * **Lightweight** - 1K lines of code that greatly simplify development
+* **Modular** - use only components you need (see [podspec](ALLKit.podspec))
 
 ## Features
 
@@ -19,7 +19,7 @@ A declarative data-driven framework for rapid development of smooth UI
 
 ## How to use
 
-Check out the demo project (requires `pod install`) and read the docs:
+Check out the demo project (run `bundle exec pod install` and open Pods/Pods.xcodeproj) and read the docs:
 
 * [Basic concepts](Docs/basic_concepts.md)
 * [Spec example](Docs/hello_world.md)
@@ -30,7 +30,6 @@ Check out the demo project (requires `pod install`) and read the docs:
 * [Replacing target-actions with closures](Docs/target_actions.md)
 * [Animations](Docs/animations.md)
 * [AutoDiff](Docs/auto_diff.md)
-* [FlexBox](Docs/flexbox.md)
 
 ## Apps
 

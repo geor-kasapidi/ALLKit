@@ -31,7 +31,12 @@ final class SizeConstraintsDemoViewController: UIViewController {
 
         adapter.collectionView.frame = view.bounds
 
-        adapter.set(sizeConstraints: SizeConstraints(width: view.bounds.width - 4))
+        adapter.set(
+            boundingDimensions: CGSize(
+                width: view.bounds.width - 4,
+                height: .nan
+            ).layoutDimensions
+        )
     }
 
     private func generateItems() -> [ListItem] {
@@ -50,12 +55,8 @@ final class SizeConstraintsDemoViewController: UIViewController {
                     layoutSpec: EmojiLayoutSpec(model: emoji)
                 )
 
-                listItem.sizeConstraintsModifier = {
-                    guard let width = $0.width else {
-                        return $0
-                    }
-
-                    return SizeConstraints(width: (width / CGFloat(n)).rounded(.down))
+                listItem.boundingDimensionsModifier = { (w, h) in
+                    ((w / CGFloat(n)).rounded(.down), .nan)
                 }
 
                 items.append(listItem)

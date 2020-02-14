@@ -24,7 +24,7 @@ final class CombinedLayoutViewController: UIViewController {
 
         scrollView.frame = view.bounds
 
-        let layout = layoutSpec.makeLayoutWith(sizeConstraints: SizeConstraints(width: view.bounds.width))
+        let layout = layoutSpec.makeLayoutWith(boundingDimensions: CGSize(width: view.bounds.width, height: .nan).layoutDimensions)
 
         scrollView.contentSize = layout.size
         layout.setup(in: contentView)

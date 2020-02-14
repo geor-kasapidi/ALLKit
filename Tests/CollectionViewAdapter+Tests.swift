@@ -6,9 +6,9 @@ import UIKit
 import ALLKit
 
 private class TestLayoutSpec: LayoutSpec {
-    override func makeNodeWith(sizeConstraints: SizeConstraints) -> LayoutNode {
-        return LayoutNode(config: { node in
-            node.height = 100
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
+        return LayoutNode({
+            $0.height(100)
         })
     }
 }
@@ -26,9 +26,9 @@ class CollectionViewAdapterTests: XCTestCase {
 
         (0..<n-1).forEach { i in
             if i % 3 == 0 {
-                let sc = SizeConstraints(width: CGFloat(drand48() * 1000), height: CGFloat(drand48() * 1000))
+                let bd = CGSize(width: CGFloat(drand48() * 1000), height: CGFloat(drand48() * 1000)).layoutDimensions
 
-                adapter.set(sizeConstraints: sc, async: i % 2 == 0)
+                adapter.set(boundingDimensions: bd, async: i % 2 == 0)
             } else {
                 let count = Int.random(in: 0..<20)
                 let items = (0..<count).map({ _ -> ListItem in
@@ -42,7 +42,7 @@ class CollectionViewAdapterTests: XCTestCase {
             }
         }
 
-        adapter.set(sizeConstraints: SizeConstraints(width: 500, height: 500)) { _ in
+        adapter.set(boundingDimensions: CGSize(width: 500, height: 500).layoutDimensions) { _ in
             exp.fulfill()
         }
 
@@ -66,7 +66,7 @@ class CollectionViewAdapterTests: XCTestCase {
 
         let exp = XCTestExpectation()
 
-        adapter.set(sizeConstraints: SizeConstraints(width: 300, height: .nan)) { _ in
+        adapter.set(boundingDimensions: CGSize(width: 300, height: CGFloat.nan).layoutDimensions) { _ in
             exp.fulfill()
         }
 
@@ -96,7 +96,7 @@ class CollectionViewAdapterTests: XCTestCase {
             let id = UUID().uuidString
 
             let item = ListItem(id: id, layoutSpec: TestLayoutSpec())
-            item.willShow = { _, _ in
+            item.willDisplay = { _, _ in
                 events.insert("willDisplay")
             }
 
@@ -106,7 +106,7 @@ class CollectionViewAdapterTests: XCTestCase {
         let exp = XCTestExpectation()
 
         adapter.set(items: items) { _ in
-            adapter.set(sizeConstraints: SizeConstraints(width: 300), async: true, completion: { _ in
+            adapter.set(boundingDimensions: CGSize(width: 400, height: CGFloat.nan).layoutDimensions, async: true, completion: { _ in
                 adapter.dataSource.moveItem(from: 100, to: 200)
 
                 exp.fulfill()

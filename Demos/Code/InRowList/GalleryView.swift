@@ -15,7 +15,7 @@ final class GalleryView: UIView {
 
         adapter.collectionView.frame = bounds
 
-        adapter.set(sizeConstraints: SizeConstraints(height: bounds.height))
+        adapter.set(boundingDimensions: CGSize(width: .nan, height: bounds.height).layoutDimensions)
     }
 
     var images: [URL] = [] {

@@ -14,7 +14,7 @@ For drawing text in the background, ALLKit provides a special API:
 
 ```swift
 final class SomeLayoutSpec: ModelLayoutSpec<String> {
-    override func makeNodeFrom(model: String, sizeConstraints: SizeConstraints) -> LayoutNode {
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
         // make attributed string
         let string = model.attributed()
             .font(UIFont.systemFont(ofSize: 15))
@@ -24,15 +24,15 @@ final class SomeLayoutSpec: ModelLayoutSpec<String> {
         // make string drawing object with options and context
         let stringDrawing = string.drawing(options: .usesLineFragmentOrigin, context: nil)
 
-        // use drawing object as size provider
-        let textNode = LayoutNode(sizeProvider: stringDrawing, config: { node in
-            node.margin(all: 16)
-        }) { (label: AsyncLabel, _) in
-            // pass drawing instance to async label
-            label.stringDrawing = stringDrawing
+        return LayoutNodeBuilder().layout().body {
+            // use drawing object as size provider
+            LayoutNodeBuilder().layout(sizeProvider: stringDrawing) {
+                $0.margin(.all(16))
+            }.view { (label: AsyncLabel, _) in
+                // pass drawing instance to async label
+                label.stringDrawing = stringDrawing
+            }
         }
-
-        return LayoutNode(children: [textNode])
     }
 }
 ```

@@ -3,29 +3,25 @@ import UIKit
 import ALLKit
 
 private final class WaterfallColorLayoutSpec: ModelLayoutSpec<String> {
-    override func makeNodeFrom(model: String, sizeConstraints: SizeConstraints) -> LayoutNode {
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
         let textString = model.attributed()
             .font(UIFont.systemFont(ofSize: 12))
             .foregroundColor(UIColor.gray)
             .make()
 
-        let textNode = LayoutNode(sizeProvider: textString, config: { node in
-
-        }) { (label: UILabel, _) in
-            label.numberOfLines = 0
-            label.attributedText = textString
-        }
-
-        let contentNode = LayoutNode(children: [textNode], config: { node in
-            node.padding(all: 8)
-        }) { (view: UIView, _) in
+        return LayoutNodeBuilder().layout {
+            $0.padding(.all(8))
+        }.view { (view: UIView, _) in
             view.layer.borderWidth = 1
             view.layer.borderColor = UIColor.black.cgColor
             view.layer.cornerRadius = 4
             view.layer.masksToBounds = true
+        }.body {
+            LayoutNode(sizeProvider: textString) { (label: UILabel, _) in
+                label.numberOfLines = 0
+                label.attributedText = textString
+            }
         }
-
-        return contentNode
     }
 }
 
@@ -77,13 +73,15 @@ final class WaterfallViewController: UIViewController, WaterfallLayoutDelegate {
 
         adapter.collectionView.frame = view.bounds
 
-        adapter.set(sizeConstraints: SizeConstraints(
-            width: waterfallLayout.columnWidthFor(viewWidth: view.bounds.width),
-            height: .nan
-        ))
+        adapter.set(
+            boundingDimensions: CGSize(
+                width: waterfallLayout.columnWidthFor(viewWidth: view.bounds.width),
+                height: .nan
+            ).layoutDimensions
+        )
     }
 
     func heightForItemAt(indexPath: IndexPath) -> CGFloat {
-        return adapter.sizeForItem(at: indexPath.item).height
+        return adapter.sizeForItem(at: indexPath.item)?.height ?? 0
     }
 }

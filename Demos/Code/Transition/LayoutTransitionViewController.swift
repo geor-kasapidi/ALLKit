@@ -42,7 +42,7 @@ final class LayoutTransitionViewController: UIViewController {
 
         let layoutSpec = size.width > size.height ? landscapeLayoutSpec : portraitLayoutSpec
 
-        let layout = layoutSpec.makeLayoutWith(sizeConstraints: SizeConstraints(width: size.width))
+        let layout = layoutSpec.makeLayoutWith(boundingDimensions: CGSize(width: size.width, height: .nan).layoutDimensions)
 
         scrollView.contentSize = layout.size
 

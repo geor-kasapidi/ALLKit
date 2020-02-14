@@ -6,8 +6,8 @@ Sometimes there is no such object. For example, when you create a view on the fl
 
 ```swift
 final class SomeLayoutSpec: LayoutSpec {
-    override func makeNodeWith(sizeConstraints: SizeConstraints) -> LayoutNode {
-        return LayoutNode() { (view: UIView, _) in
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNode {
+        return LayoutNode(...) { (view: UIView, _) in
             // add tap gesture recognizer
         }
     }
@@ -40,8 +40,8 @@ Now you have all power of closures when using gestures or control events.
 
 ```swift
 final class SomeLayoutSpec: LayoutSpec {
-    override func makeNodeWith(sizeConstraints: SizeConstraints) -> LayoutNode {
-        return LayoutNode() { (view: UIView, _) in
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNode {
+        return LayoutNode(...) { (view: UIView, _) in
             view.all_addGestureRecognizer({ (_: UITapGestureRecognizer) in
                 // wow! swift closure!
             })

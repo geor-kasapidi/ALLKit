@@ -76,10 +76,10 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
 
     // MARK: -
 
-    public func set(sizeConstraints: SizeConstraints, async: Bool = false, completion: ((Bool) -> Void)? = nil) {
+    public func set(boundingDimensions: LayoutDimensions<CGFloat>, async: Bool = false, completion: ((Bool) -> Void)? = nil) {
         assert(Thread.isMainThread)
 
-        dataSource.set(newSizeConstraints: sizeConstraints, async: async) { [weak self] updateType in
+        dataSource.set(boundingDimensions: boundingDimensions, async: async) { [weak self] updateType in
             self?.update(type: updateType, completion)
         }
     }
@@ -181,16 +181,16 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
 
     // MARK: -
 
-    public func sizeForItem(at index: Int) -> CGSize {
+    public func sizeForItem(at index: Int) -> CGSize? {
         assert(Thread.isMainThread)
 
-        return dataSource.models[index].layout.size
+        return dataSource.models[safe: index]?.layout.size
     }
 
     // MARK: - UICollectionViewDelegateFlowLayout
 
     public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return sizeForItem(at: indexPath.item)
+        return sizeForItem(at: indexPath.item) ?? .zero
     }
 
     // MARK: - UICollectionViewDataSource
@@ -208,36 +208,48 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
 
         let index = indexPath.item
 
-        let model = dataSource.models[index]
+        if let model = dataSource.models[safe: index] {
+            let view: UIView
 
-        let viewToAdd: UIView
+            if let swipeActions = model.item.swipeActions {
+                view = SwipeView(contentLayout: model.layout, actions: swipeActions)
+            } else {
+                view = model.layout.makeView()
+            }
 
-        if let swipeActions = model.item.swipeActions {
-            viewToAdd = SwipeView(contentLayout: model.layout, actions: swipeActions)
+            model.item.setup?(view, index)
+
+            UIView.performWithoutAnimation {
+                cell.contentView.subviews.forEach({ $0.removeFromSuperview() })
+                cell.contentView.addSubview(view)
+            }
         } else {
-            viewToAdd = model.layout.makeView()
-        }
-
-        if let didTap = model.item.didTap {
-            viewToAdd.all_addGestureRecognizer { [weak viewToAdd] (_: UITapGestureRecognizer) in
-                viewToAdd.flatMap({
-                    didTap($0, index)
-                })
+            UIView.performWithoutAnimation {
+                cell.contentView.subviews.forEach({ $0.removeFromSuperview() })
             }
         }
-
-        UIView.performWithoutAnimation {
-            cell.contentView.subviews.forEach({ $0.removeFromSuperview() })
-            cell.contentView.addSubview(viewToAdd)
-        }
-
-        model.item.willShow?(viewToAdd, index)
 
         return cell
     }
 
+    public func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
+        return false
+    }
+
+    public func collectionView(_ collectionView: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
+        return false
+    }
+
+    public func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        dataSource.models[safe: indexPath.item]?.item.willDisplay?(cell.contentView.subviews.first, indexPath.item)
+    }
+
+    public func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        dataSource.models[safe: indexPath.item]?.item.didEndDisplaying?(cell.contentView.subviews.first, indexPath.item)
+    }
+
     public func collectionView(_ collectionView: UICollectionView, canMoveItemAt indexPath: IndexPath) -> Bool {
-        return settings.allowInteractiveMovement && dataSource.models[indexPath.item].item.canMove
+        return settings.allowInteractiveMovement && dataSource.models[safe: indexPath.item]?.item.canMove ?? false
     }
 
     public func collectionView(_ collectionView: UICollectionView, moveItemAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
@@ -246,7 +258,7 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
 
         dataSource.moveItem(from: sourceIndex, to: destinationIndex)
 
-        dataSource.models[destinationIndex].item.didMove?(sourceIndex, destinationIndex)
+        dataSource.models[safe: destinationIndex]?.item.didMove?(sourceIndex, destinationIndex)
     }
 
     // MARK: - UIScrollViewDelegate

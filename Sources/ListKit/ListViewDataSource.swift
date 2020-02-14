@@ -1,30 +1,10 @@
 import Foundation
 import UIKit
 
-private extension ListItem {
-    func makeLayout(_ sizeConstraints: SizeConstraints) -> Layout {
-        return layoutSpec.makeLayoutWith(sizeConstraints: sizeConstraintsModifier?(sizeConstraints) ?? sizeConstraints)
-    }
-}
-
-private extension Array {
-    mutating func move(from i: Index, to j: Index) {
-        insert(remove(at: i), at: j)
-    }
-}
-
-private func onMainThread(_ closure: @escaping () -> Void) {
-    if Thread.isMainThread {
-        closure()
-    } else {
-        DispatchQueue.main.async(execute: closure)
-    }
-}
-
 typealias CellModel = (item: ListItem, layout: Layout)
 
 private enum MakeModels {
-    static func from(sizeConstraints: SizeConstraints,
+    static func from(boundingDimensions: LayoutDimensions<CGFloat>,
                      items: [ListItem],
                      async: Bool,
                      queue: DispatchQueue,
@@ -32,7 +12,7 @@ private enum MakeModels {
         if async {
             queue.async {
                 let models = items.map {
-                    ($0, $0.makeLayout(sizeConstraints))
+                    ($0, $0.makeLayoutWith(boundingDimensions))
                 }
 
                 completion?(models)
@@ -40,7 +20,7 @@ private enum MakeModels {
         } else {
             let models = queue.sync {
                 return items.map {
-                    ($0, $0.makeLayout(sizeConstraints))
+                    ($0, $0.makeLayoutWith(boundingDimensions))
                 }
             }
 
@@ -48,7 +28,7 @@ private enum MakeModels {
         }
     }
 
-    static func from(sizeConstraints: SizeConstraints,
+    static func from(boundingDimensions: LayoutDimensions<CGFloat>,
                      newItems: [ListItem],
                      oldItems: [ListItem],
                      oldModels: [CellModel],
@@ -79,7 +59,7 @@ private enum MakeModels {
             }
 
             let newModels = newItems.map {
-                ($0, layouts[$0] ?? $0.makeLayout(sizeConstraints))
+                ($0, layouts[$0] ?? $0.makeLayoutWith(boundingDimensions))
             }
 
             completion?(newModels, changes)
@@ -96,26 +76,26 @@ final class ListViewDataSource {
     private let queue = DispatchQueue(label: "ALLKit.ListViewDataSource.queue")
 
     private var generation: UInt64 = 0
-    private var sizeConstraints = SizeConstraints()
+    private var boundingDimensions: LayoutDimensions<CGFloat>?
     private var items: [ListItem] = []
 
     private(set) var models: [CellModel] = []
 
     // MARK: -
 
-    func set(newSizeConstraints: SizeConstraints, async: Bool, completion: ((UpdateType?) -> Void)?) {
-        guard !newSizeConstraints.isEmpty, newSizeConstraints != sizeConstraints else {
+    func set(boundingDimensions: LayoutDimensions<CGFloat>, async: Bool, completion: ((UpdateType?) -> Void)?) {
+        guard boundingDimensions != self.boundingDimensions else {
             completion?(nil)
 
             return
         }
 
-        sizeConstraints = newSizeConstraints
+        self.boundingDimensions = boundingDimensions
 
         generation += 1
         let g = generation
 
-        MakeModels.from(sizeConstraints: sizeConstraints, items: items, async: async, queue: queue) { [weak self] models in
+        MakeModels.from(boundingDimensions: boundingDimensions, items: items, async: async, queue: queue) { [weak self] models in
             onMainThread {
                 guard let self = self else { return }
 
@@ -137,7 +117,7 @@ final class ListViewDataSource {
 
         (oldItems, items) = (items, newItems)
 
-        guard !sizeConstraints.isEmpty else {
+        guard let boundingDimensions = boundingDimensions else {
             completion?(nil)
 
             return
@@ -146,7 +126,7 @@ final class ListViewDataSource {
         generation += 1
         let g = generation
 
-        MakeModels.from(sizeConstraints: sizeConstraints, newItems: newItems, oldItems: oldItems, oldModels: models, queue: queue) { [weak self] (models, changes) in
+        MakeModels.from(boundingDimensions: boundingDimensions, newItems: newItems, oldItems: oldItems, oldModels: models, queue: queue) { [weak self] (models, changes) in
             onMainThread {
                 guard let self = self else { return }
 

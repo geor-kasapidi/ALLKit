@@ -6,17 +6,12 @@ public struct AttributedStringDrawing: SizeProvider {
     public let options: NSStringDrawingOptions
     public let context: NSStringDrawingContext?
 
-    public func calculateSize(with constraints: SizeConstraints) -> CGSize {
-        let rectangle = string.boundingRect(
-            with: CGSize(
-                width: constraints.width  ?? .greatestFiniteMagnitude,
-                height: constraints.height ?? .greatestFiniteMagnitude
-            ),
+    public func calculateSize(boundedBy dimensions: LayoutDimensions<CGFloat>) -> CGSize {
+        string.boundingRect(
+            with: dimensions.size,
             options: options,
             context: context
-        )
-
-        return rectangle.size
+        ).size
     }
 
     public func draw(with size: CGSize) -> UIImage? {
@@ -48,7 +43,7 @@ extension NSAttributedString {
 }
 
 extension NSAttributedString: SizeProvider {
-    public func calculateSize(with constraints: SizeConstraints) -> CGSize {
-        return drawing().calculateSize(with: constraints)
+    public func calculateSize(boundedBy dimensions: LayoutDimensions<CGFloat>) -> CGSize {
+        return drawing().calculateSize(boundedBy: dimensions)
     }
 }

@@ -73,6 +73,6 @@ final class MovementViewController: UIViewController {
 
         let size = (view.bounds.width - CGFloat(numberOfColumns + 1) * Consts.spacing) / CGFloat(numberOfColumns) - 1
 
-        adapter.set(sizeConstraints: SizeConstraints(width: size, height: size))
+        adapter.set(boundingDimensions: CGSize(width: size, height: size).layoutDimensions)
     }
 }

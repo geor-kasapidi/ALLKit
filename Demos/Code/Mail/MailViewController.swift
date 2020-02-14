@@ -51,7 +51,7 @@ final class MailViewController: UIViewController {
 
         adapter.collectionView.frame = view.bounds
 
-        adapter.set(sizeConstraints: SizeConstraints(width: view.bounds.width))
+        adapter.set(boundingDimensions: CGSize(width: view.bounds.width, height: .nan).layoutDimensions)
     }
 
     private var rows: [MailRow] = [] {
@@ -64,30 +64,42 @@ final class MailViewController: UIViewController {
 
                 let deleteAction = SwipeAction(
                     layoutSpec: MailRowSwipeActionLayoutSpec(model: MailRowSwipeItem(image: UIImage(named: "trash")!, text: "Delete")),
-                    color: #colorLiteral(red: 0.7450980544, green: 0.1884698107, blue: 0.1212462212, alpha: 1),
-                    perform: { [weak self] in
-                        guard let strongSelf = self else { return }
+                    setup: ({ [weak self] view, close in
+                        view.backgroundColor = #colorLiteral(red: 0.7450980544, green: 0.1884698107, blue: 0.1212462212, alpha: 1)
+                        view.all_addGestureRecognizer { (_: UITapGestureRecognizer) in
+                            guard let strongSelf = self else { return }
 
-                        _ = strongSelf.rows.firstIndex(of: row).flatMap { strongSelf.rows.remove(at: $0) }
-                })
+                            close(true)
+
+                            _ = strongSelf.rows.firstIndex(of: row).flatMap { strongSelf.rows.remove(at: $0) }
+                        }
+                    })
+                )
 
                 let customAction = SwipeAction(
                     layoutSpec: MailRowSwipeActionLayoutSpec(model: MailRowSwipeItem(image: UIImage(named: "setting")!, text: "Other")),
-                    color: #colorLiteral(red: 0.2745098174, green: 0.4862745106, blue: 0.1411764771, alpha: 1),
-                    perform: { [weak self] in
-                        guard let strongSelf = self else { return }
+                    setup: ({ [weak self] view, close in
+                        view.backgroundColor = #colorLiteral(red: 0.2745098174, green: 0.4862745106, blue: 0.1411764771, alpha: 1)
+                        view.all_addGestureRecognizer { (_: UITapGestureRecognizer) in
+                            guard let strongSelf = self else { return }
 
-                        let alert = UIAlertController(title: "WOW", message: "This is alert", preferredStyle: .alert)
+                            close(true)
 
-                        alert.addAction(UIAlertAction(title: "Close me", style: .cancel, handler: nil))
+                            let alert = UIAlertController(title: "WOW", message: "This is alert", preferredStyle: .alert)
 
-                        strongSelf.present(alert, animated: true, completion: nil)
-                })
+                            alert.addAction(UIAlertAction(title: "Close me", style: .cancel, handler: nil))
+
+                            strongSelf.present(alert, animated: true, completion: nil)
+                        }
+                    })
+                )
 
                 item.swipeActions = SwipeActions([customAction, deleteAction])
 
-                item.didTap = { _, _ in
-                    print(row.text)
+                item.setup = { view, _ in
+                    view.all_addGestureRecognizer { (_: UITapGestureRecognizer) in
+                        print(row.text)
+                    }
                 }
 
                 return item

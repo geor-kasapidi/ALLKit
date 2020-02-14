@@ -6,7 +6,7 @@ import UIKit
 import ALLKit
 
 private class TestLayoutSpec: LayoutSpec {
-    override func makeNodeWith(sizeConstraints: SizeConstraints) -> LayoutNode {
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
         return LayoutNode()
     }
 }

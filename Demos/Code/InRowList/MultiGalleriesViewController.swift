@@ -42,6 +42,6 @@ final class MultiGalleriesViewController: UIViewController {
 
         adapter.collectionView.frame = view.bounds
 
-        adapter.set(sizeConstraints: SizeConstraints(width: view.bounds.width))
+        adapter.set(boundingDimensions: CGSize(width: view.bounds.width, height: .nan).layoutDimensions)
     }
 }

@@ -1,22 +1,15 @@
 Pod::Spec.new do |s|
   s.name                       = 'ALLKit'
-  s.version                    = '1.1.1'
+  s.version                    = '1.2'
   s.summary                    = 'Async List Layout Kit'
   s.homepage                   = 'https://github.com/geor-kasapidi/ALLKit'
   s.license                    = { :type => 'MIT', :file => 'LICENSE' }
   s.author                     = { 'Georgy Kasapidi' => 'geor.kasapidi@icloud.com' }
   s.source                     = { :git => 'https://github.com/geor-kasapidi/ALLKit.git', :tag => "v#{s.version}" }
   s.platform                   = :ios, '9.0'
-  s.swift_version              = '5'
+  s.swift_version              = '5.1'
   s.requires_arc               = true
   s.default_subspecs           = 'ListKit', 'StringBuilder'
-
-  s.subspec 'FlexBox' do |ss|
-    ss.source_files             = 'Sources/FlexBox/*.swift'
-    ss.frameworks               = 'Foundation', 'CoreGraphics'
-    ss.library                  = 'c++'
-    ss.dependency                 'Yoga', '1.14'
-  end
 
   s.subspec 'Diff' do |ss|
     ss.source_files             = 'Sources/Diff/*.swift'
@@ -30,7 +23,8 @@ Pod::Spec.new do |s|
   s.subspec 'Layout' do |ss|
     ss.source_files             = 'Sources/Layout/*.swift'
     ss.frameworks               = 'Foundation', 'UIKit'
-    ss.dependency                 'ALLKit/FlexBox'
+    ss.library                  = 'c++'
+    ss.dependency                 'Yoga', '1.14'
   end
 
   s.subspec 'Support' do |ss|

@@ -4,8 +4,8 @@ import yoga
 
 protocol LayoutCalculator: class {
     func makeLayoutBy(spec: LayoutSpec,
-                      sizeConstraints: SizeConstraints,
-                      direction: UIUserInterfaceLayoutDirection) -> Layout
+                      boundingDimensions: LayoutDimensions<CGFloat>,
+                      layoutDirection: UIUserInterfaceLayoutDirection) -> Layout
 }
 
 final class FlatLayoutCalculator: LayoutCalculator {
@@ -61,14 +61,14 @@ final class FlatLayoutCalculator: LayoutCalculator {
     // MARK: -
 
     func makeLayoutBy(spec: LayoutSpec,
-                      sizeConstraints: SizeConstraints,
-                      direction: UIUserInterfaceLayoutDirection) -> Layout {
-        let node = spec.makeNodeWith(sizeConstraints: sizeConstraints)
+                      boundingDimensions: LayoutDimensions<CGFloat>,
+                      layoutDirection: UIUserInterfaceLayoutDirection) -> Layout {
+        let node = spec.makeNodeWith(boundingDimensions: boundingDimensions).layoutNode
 
-        node.yoga.calculateLayoutWith(
-            width: sizeConstraints.width ?? .nan,
-            height: sizeConstraints.height ?? .nan,
-            parentDirection: direction == .rightToLeft ? .RTL : .LTR
+        node.yoga.calculateLayout(
+            width: boundingDimensions.width.value,
+            height: boundingDimensions.height.value,
+            parentDirection: layoutDirection == .rightToLeft ? .RTL : .LTR
         )
 
         let frame = node.yoga.frame

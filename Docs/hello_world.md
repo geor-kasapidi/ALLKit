@@ -15,51 +15,39 @@ struct DemoLayoutModel {
 
 ```swift
 final class DemoLayoutSpec: ModelLayoutSpec<DemoLayoutModel> {
-    override func makeNodeFrom(model: DemoLayoutModel, sizeConstraints: SizeConstraints) -> LayoutNode {
-        // Leaf node with view
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
+        let titleString = model.title.attributed()
+            .font(UIFont.systemFont(ofSize: 16))
+            .foregroundColor(UIColor.black)
+            .make()
 
-        let imageNode = LayoutNode(children: [], config: { node in
-            node.width = 48
-            node.height = 48
-        }) { (imageView: UIImageView, isNew) in
-            if isNew /* if view is only created */ {
-                imageView.contentMode = .scaleAspectFill
-                imageView.layer.cornerRadius = 24
-                imageView.layer.masksToBounds = true
-                imageView.layer.borderWidth = 1
-                imageView.layer.borderColor = UIColor.lightGray.cgColor
-                imageView.backgroundColor = UIColor.lightGray
+        // root container node
+        return LayoutNodeBuilder().layout {
+            $0.flexDirection(.row).alignItems(.center).padding(.all(16))
+        }.body {
+            // image node
+            LayoutNodeBuilder().layout {
+                $0.width(48).height(48)
+            }.view { (imageView: UIImageView, isNew) in
+                if isNew /* if view is only created */ {
+                    imageView.contentMode = .scaleAspectFill
+                    imageView.layer.cornerRadius = 24
+                    imageView.layer.masksToBounds = true
+                    imageView.layer.borderWidth = 1
+                    imageView.layer.borderColor = UIColor.lightGray.cgColor
+                    imageView.backgroundColor = UIColor.lightGray
+                }
+
+                imageView.image = self.model.image
             }
-
-            imageView.image = model.image
+            // title node
+            LayoutNodeBuilder().layout(sizeProvider: titleString) {
+                $0.margin(.left(16))
+            }.view { (label: UILabel, _) in
+                label.numberOfLines = 0
+                label.attributedText = titleString
+            }
         }
-
-        // Leaf node with size provider and view
-
-        let titleString = NSAttributedString(
-            string: model.title,
-            attributes: [
-                .font: UIFont.systemFont(ofSize: 16),
-                .foregroundColor: UIColor.black
-            ]
-        )
-
-        let titleNode = LayoutNode(sizeProvider: titleString, config: { node in
-            node.marginLeft = 16
-        }) { (label: UILabel, _) in
-            label.numberOfLines = 0
-            label.attributedText = titleString
-        }
-
-        // Node with children and no view
-
-        let contentNode = LayoutNode(children: [imageNode, titleNode], config: { node in
-            node.flexDirection = .row
-            node.alignItems = .center
-            node.padding(all: 16)
-        })
-
-        return contentNode
     }
 }
 ```
@@ -75,10 +63,7 @@ let layoutSpec = DemoLayoutSpec(
 )
 
 let layout = layoutSpec.makeLayoutWith(
-    sizeConstraints: SizeConstraints(
-        width: UIScreen.main.bounds.width,
-        height: .nan
-    )
+    boundingDimensions: CGSize(...).layoutDimensions
 )
 
 let view = layout.makeView()

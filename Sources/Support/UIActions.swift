@@ -10,12 +10,8 @@ private final class AssociatedProxyTable<KeyType: AnyObject, ValueType: AnyObjec
     }
 
     subscript(holder: KeyType) -> ValueType? {
-        get {
-            return objc_getAssociatedObject(holder, key) as? ValueType
-        }
-        set {
-            objc_setAssociatedObject(holder, key, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-        }
+        get { objc_getAssociatedObject(holder, key) as? ValueType }
+        set { objc_setAssociatedObject(holder, key, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
     }
 }
 
@@ -41,21 +37,15 @@ extension UIControl {
 
     public func all_setEventHandler(for controlEvents: UIControl.Event, _ action: (() -> Void)?) {
         let handlers = Storage.table[self] ?? NSMutableDictionary()
-
         if let currentHandler = handlers[controlEvents.rawValue] {
             removeTarget(currentHandler, action: #selector(Handler.invoke), for: controlEvents)
-
             handlers[controlEvents.rawValue] = nil
         }
-
         if let newAction = action {
             let newHandler = Handler(action: newAction)
-
             addTarget(newHandler, action: #selector(Handler.invoke), for: controlEvents)
-
             handlers[controlEvents.rawValue] = newHandler
         }
-
         Storage.table[self] = handlers
     }
 }
@@ -85,13 +75,9 @@ extension UIView {
     @discardableResult
     public func all_addGestureRecognizer<GestureType: UIGestureRecognizer>(_ action: @escaping (GestureType) -> Void) -> GestureType {
         let handler = Handler<GestureType>(action: action)
-
         let gesture = GestureType(target: handler, action: #selector(Handler.invoke(gesture:)))
-
         Storage.table[gesture] = handler
-
         addGestureRecognizer(gesture)
-
         return gesture
     }
 }

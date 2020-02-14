@@ -3,13 +3,13 @@ import UIKit
 import ALLKit
 
 private final class SwipeTextLayoutSpec: ModelLayoutSpec<String> {
-    override func makeNodeFrom(model: String, sizeConstraints: SizeConstraints) -> LayoutNode {
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
         let attrText = model.attributed()
             .font(UIFont.boldSystemFont(ofSize: 40))
             .alignment(.center)
             .make()
 
-        return LayoutNode(sizeProvider: attrText, config: nil) { (label: UILabel, _) in
+        return LayoutNode(sizeProvider: attrText) { (label: UILabel, _) in
             label.attributedText = attrText
         }
     }
@@ -99,10 +99,12 @@ final class RootViewController: UIViewController {
                     layoutSpec: SelectableRowLayoutSpec(model: row.name)
                 )
 
-                rowItem.didTap = { [weak self] _, itemIndex in
-                    self?.adapter.collectionView.deselectItem(at: IndexPath(item: itemIndex, section: 0), animated: true)
+                rowItem.setup = { [weak self] view, itemIndex in
+                    view.all_addGestureRecognizer { (_: UITapGestureRecognizer) in
+                        self?.adapter.collectionView.deselectItem(at: IndexPath(item: itemIndex, section: 0), animated: true)
 
-                    row.onSelect()
+                        row.onSelect()
+                    }
                 }
 
                 return rowItem
@@ -123,6 +125,6 @@ final class RootViewController: UIViewController {
 
         adapter.collectionView.frame = view.bounds
 
-        adapter.set(sizeConstraints: SizeConstraints(width: view.bounds.width))
+        adapter.set(boundingDimensions: CGSize(width: view.bounds.width, height: .nan).layoutDimensions)
     }
 }

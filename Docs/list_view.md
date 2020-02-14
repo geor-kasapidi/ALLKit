@@ -14,10 +14,7 @@ Forget about manual setting delegate and datasource, cell subclassing, etc. Just
 adapter.collectionView.frame = view.bounds
 
 adapter.set(
-    sizeConstraints: SizeConstraints(
-        width: view.bounds.width,
-        height: .nan // typical vertical list with dynamic height
-    )
+    boundingDimensions: CGSize(...).layoutDimensions
 )
 
 ...
@@ -32,13 +29,13 @@ That's it. And no direct calls of `performBatchUpdates` or `reloadData`.
 [ListItem](../Sources/ListKit/ListItem.swift) object represents cell and connects data model with UI:
 
 ```swift
-let item = ListItem(id: String, model: Equatable, layoutSpec: LayoutSpec)
+let item = ListItem(id: Hashable, layoutSpec: LayoutSpec)
 
-item.didTap = { view, index in
+item.setup = { view, index in
 
 }
 
-item.willShow = { view, index in
+item.willDisplay = { view, index in
 
 }
 ```
@@ -52,8 +49,8 @@ UICollectionView does not have built-in swiping support, like UITableView. With 
 ```swift
 item.swipeActions = SwipeActions(
     [
-        SwipeAction(layoutSpec: LayoutSpec1, color: .red, perform: { ... }),
-        SwipeAction(layoutSpec: LayoutSpec2, color: .blue, perform: { ... })
+        SwipeAction(layoutSpec: LayoutSpec1, setup: { ... }),
+        SwipeAction(layoutSpec: LayoutSpec2, setup: { ... })
     ]
 )
 ```
@@ -63,8 +60,8 @@ item.swipeActions = SwipeActions(
 In complex lists, items can have different sizes — a full-width header, a multi-column grid, etc. For this purpose, ListItem has a special property:
 
 ```swift
-item.sizeConstraintsModifier = { adapterSizeConstraints in
-    return SizeConstraints(width: adapterSizeConstraints.width! / 2, height: .nan)
+item.boundingDimensionsModifier = { w, h in
+    return (w / 2, .nan)
 }
 ```
 

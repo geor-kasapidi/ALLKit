@@ -65,9 +65,7 @@ final class LayoutAnimationViewController: UIViewController {
             return
         }
 
-        let size = view.bounds.size
-
-        let layout = layoutSpec.makeLayoutWith(sizeConstraints: SizeConstraints(width: size.width))
+        let layout = layoutSpec.makeLayoutWith(boundingDimensions: view.bounds.size.layoutDimensions)
 
         scrollView.contentSize = layout.size
 

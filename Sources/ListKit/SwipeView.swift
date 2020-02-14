@@ -1,6 +1,32 @@
 import Foundation
 import UIKit
 
+public struct SwipeAction {
+    public typealias ViewSetup = (UIView, @escaping (Bool) -> Void) -> Void // view + close(animated)
+
+    public let layoutSpec: LayoutSpec
+    public let setup: ViewSetup
+
+    public init(layoutSpec: LayoutSpec, setup: @escaping ViewSetup) {
+        self.layoutSpec = layoutSpec
+        self.setup = setup
+    }
+}
+
+public struct SwipeActions {
+    public let list: [SwipeAction]
+    public let size: CGFloat
+
+    public init?(_ list: [SwipeAction], size: CGFloat = 96) {
+        assert(size > 0)
+
+        guard size.isNormal, !list.isEmpty else { return nil }
+
+        self.list = list
+        self.size = size
+    }
+}
+
 public protocol SwipeViewPublicInterface {
     func open(animated: Bool)
     func close(animated: Bool)
@@ -19,10 +45,10 @@ final class SwipeView: UIView, UIGestureRecognizerDelegate {
         clipsToBounds = true
 
         do {
-            let sc = SizeConstraints(width: buttonWidth, height: contentLayout.size.height)
+            let boundingSize = CGSize(width: buttonWidth, height: contentLayout.size.height)
 
             actions.list.reversed().forEach { action in
-                let layout = action.layoutSpec.makeLayoutWith(sizeConstraints: sc)
+                let layout = action.layoutSpec.makeLayoutWith(boundingDimensions: boundingSize.layoutDimensions)
 
                 let view = UIView(frame: CGRect(
                     x: 0,
@@ -32,13 +58,9 @@ final class SwipeView: UIView, UIGestureRecognizerDelegate {
                 ))
                 view.clipsToBounds = true
                 view.addSubview(layout.makeView())
-                view.backgroundColor = action.color
-                view.all_addGestureRecognizer { [weak self] (_: UITapGestureRecognizer) in
-                    self?.update(offset: 0, animated: true)
-
-                    action.perform()
-                }
-
+                action.setup(view, { [weak self] animated in
+                    self?.update(offset: 0, animated: animated)
+                })
                 addSubview(view)
 
                 buttons.append(view)

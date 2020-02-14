@@ -16,7 +16,7 @@ There are 4 types of layout nodes:
 * **A**
 
 ```swift
-LayoutNode(children: [/*...*/], config: { yoga in
+LayoutNode(children: [/*...*/], {
     /* flexbox properties */
 }) { (view: ViewType, isNew) in
     /* view properties */
@@ -26,7 +26,7 @@ LayoutNode(children: [/*...*/], config: { yoga in
 * **B**
 
 ```swift
-LayoutNode(children: [/*...*/], config: { yoga in
+LayoutNode(children: [/*...*/], {
     /* flexbox properties */
 })
 ```
@@ -36,7 +36,7 @@ LayoutNode(children: [/*...*/], config: { yoga in
 ```swift
 let sizeProvider: SizeProvider
 
-LayoutNode(sizeProvider: sizeProvider, config: { yoga in
+LayoutNode(sizeProvider: sizeProvider, {
     /* flexbox properties */
 }) { (view: ViewType, isNew) in
     /* view properties */
@@ -48,7 +48,7 @@ LayoutNode(sizeProvider: sizeProvider, config: { yoga in
 ```swift
 let sizeProvider: SizeProvider
 
-LayoutNode(sizeProvider: sizeProvider, config: { yoga in
+LayoutNode(sizeProvider: sizeProvider, {
     /* flexbox properties */
 })
 ```
@@ -63,7 +63,7 @@ If layout node is an atom, then layout spec is a molecule - group of atoms. Layo
 
 ```swift
 final class YourLayoutSpec: LayoutSpec {
-    override func makeNodeWith(sizeConstraints: SizeConstraints) -> LayoutNode {
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
         ...
     }
 }
@@ -71,8 +71,8 @@ final class YourLayoutSpec: LayoutSpec {
 
 ```swift
 final class YourLayoutSpec: ModelLayoutSpec<SomeModel> {
-    override func makeNodeFrom(model: SomeModel, sizeConstraints: SizeConstraints) -> LayoutNode {
-        ...
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
+        self.model...
     }
 }
 ```
@@ -93,14 +93,14 @@ struct Model2 {
 }
 
 final class LayoutSpec1: ModelLayoutSpec<Model1> {
-    override func makeNodeFrom(model: Model1, sizeConstraints: SizeConstraints) -> LayoutNode {
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
         ...
     }
 }
 
 final class LayoutSpec2: ModelLayoutSpec<Model2> {
-    override func makeNodeFrom(model: Model2, sizeConstraints: SizeConstraints) -> LayoutNode {
-        let node1 = LayoutSpec1(model: model.submodel).makeNodeWith(sizeConstraints: sizeConstraints)
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
+        let node1 = LayoutSpec1(model: model.submodel).makeNodeWith(boundingDimensions: boundingDimensions)
 
         let node2 = LayoutNode(children: [node1])
 
@@ -117,10 +117,7 @@ Layout is a view stencil.
 
 ```swift
 let layout = layoutSpec.makeLayoutWith(
-    sizeConstraints: SizeConstraints(
-        width: UIScreen.main.bounds.width,
-        height: .nan
-    )
+    boundingDimensions: CGSize(...).layoutDimensions
 )
 ```
 

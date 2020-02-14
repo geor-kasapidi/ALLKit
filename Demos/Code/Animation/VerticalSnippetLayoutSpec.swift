@@ -4,7 +4,7 @@ import ALLKit
 import Nuke
 
 final class VerticalSnippetLayoutSpec: ModelLayoutSpec<AnimationDemoModel> {
-    override func makeNodeFrom(model: AnimationDemoModel, sizeConstraints: SizeConstraints) -> LayoutNode {
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
         let titleText = model.title.attributed()
             .font(UIFont.boldSystemFont(ofSize: 18))
             .foregroundColor(#colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1))
@@ -15,8 +15,8 @@ final class VerticalSnippetLayoutSpec: ModelLayoutSpec<AnimationDemoModel> {
             .foregroundColor(#colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1))
             .make()
 
-        let titleNode = LayoutNode(sizeProvider: titleText, config: { node in
-            node.margin(all: 16)
+        let titleNode = LayoutNode(sizeProvider: titleText, {
+            $0.margin(.all(16))
         }) { (label: UILabel, isNew) in
             if isNew {
                 label.numberOfLines = 0
@@ -24,8 +24,8 @@ final class VerticalSnippetLayoutSpec: ModelLayoutSpec<AnimationDemoModel> {
             }
         }
 
-        let subtitleNode = LayoutNode(sizeProvider: subtitleText, config: { node in
-            node.margin(all: 16)
+        let subtitleNode = LayoutNode(sizeProvider: subtitleText, {
+            $0.margin(.all(16))
         }) { (label: UILabel, isNew) in
             if isNew {
                 label.numberOfLines = 0
@@ -33,10 +33,8 @@ final class VerticalSnippetLayoutSpec: ModelLayoutSpec<AnimationDemoModel> {
             }
         }
 
-        let imageNode = LayoutNode(config: { node in
-            node.height = 200
-            node.marginBottom = 16
-            node.width = 100%
+        let imageNode = LayoutNode({
+            $0.width(.percent(100)).height(200).margin(.bottom(16))
         }) { (imageView: UIImageView, isNew) in
             imageView.layer.cornerRadius = 0
 
@@ -45,7 +43,7 @@ final class VerticalSnippetLayoutSpec: ModelLayoutSpec<AnimationDemoModel> {
                 imageView.backgroundColor = #colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1)
                 imageView.layer.masksToBounds = true
 
-                model.url.flatMap {
+                self.model.url.flatMap {
                     _ = Nuke.loadImage(
                         with: $0,
                         options: ImageLoadingOptions(transition: .fadeIn(duration: 0.33)),
@@ -55,9 +53,8 @@ final class VerticalSnippetLayoutSpec: ModelLayoutSpec<AnimationDemoModel> {
             }
         }
 
-        let mainStackNode = LayoutNode(children: [imageNode, titleNode, subtitleNode], config: { node in
-            node.flexDirection = .column
-            node.alignItems = .center
+        let mainStackNode = LayoutNode(children: [imageNode, titleNode, subtitleNode], {
+            $0.flexDirection(.column).alignItems(.center)
         })
 
         return mainStackNode

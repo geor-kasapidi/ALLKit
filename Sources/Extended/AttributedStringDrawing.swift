@@ -7,11 +7,7 @@ public struct AttributedStringDrawing: SizeProvider {
     public let context: NSStringDrawingContext?
 
     public func calculateSize(boundedBy dimensions: LayoutDimensions<CGFloat>) -> CGSize {
-        string.boundingRect(
-            with: dimensions.size,
-            options: options,
-            context: context
-        ).size
+        string.boundingRect(with: dimensions.size, options: options, context: context).size
     }
 
     public func draw(with size: CGSize) -> UIImage? {

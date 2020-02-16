@@ -13,19 +13,11 @@ struct ChatMessage: Hashable {
     let date: Date
 }
 
-final class ChatViewController: UIViewController {
-    private let adapter = CollectionViewAdapter()
-
+final class ChatViewController: ListViewController<UICollectionView, UICollectionViewCell> {
     override func viewDidLoad() {
         super.viewDidLoad()
 
         do {
-            view.backgroundColor = UIColor.white
-
-            view.addSubview(adapter.collectionView)
-
-            adapter.collectionView.backgroundColor = UIColor.white
-
             if #available(iOS 11.0, *) {
                 adapter.collectionView.contentInsetAdjustmentBehavior = .never
             } else {
@@ -49,8 +41,6 @@ final class ChatViewController: UIViewController {
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
 
-        adapter.collectionView.frame = view.bounds
-
         adapter.set(
             boundingDimensions: CGSize(
                 width: view.bounds.width,
@@ -59,12 +49,12 @@ final class ChatViewController: UIViewController {
         )
     }
 
-    private func generateItems() -> [ListItem] {
+    private func generateItems() -> [ListItem<DemoContext>] {
         let sentences = DemoContent.loremIpsum
         let emodji = DemoContent.emodjiString
 
-        return (0..<100).flatMap { n -> [ListItem] in
-            let firstMessageItem: ListItem
+        return (0..<100).flatMap { n -> [ListItem<DemoContext>] in
+            let firstMessageItem: ListItem<DemoContext>
 
             do {
                 let text = sentences.randomElement()!
@@ -81,15 +71,9 @@ final class ChatViewController: UIViewController {
                         layoutSpec: OutgoingTextMessageLayoutSpec(model: message)
                     )
                 }
-
-                firstMessageItem.willDisplay = { view, _ in
-                    UIView.performWithoutAnimation {
-                        view?.transform = CGAffineTransform(rotationAngle: CGFloat.pi)
-                    }
-                }
             }
 
-            let secondMessageItem: ListItem
+            let secondMessageItem: ListItem<DemoContext>
 
             do {
                 let text = String(emodji.prefix(Int.random(in: 1..<emodji.count)))
@@ -106,15 +90,15 @@ final class ChatViewController: UIViewController {
                         layoutSpec: OutgoingTextMessageLayoutSpec(model: message)
                     )
                 }
-
-                secondMessageItem.willDisplay = { view, _ in
-                    UIView.performWithoutAnimation {
-                        view?.transform = CGAffineTransform(rotationAngle: CGFloat.pi)
-                    }
-                }
             }
 
             return [firstMessageItem, secondMessageItem]
+        }
+    }
+
+    override func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        UIView.performWithoutAnimation {
+            cell.contentView.transform = CGAffineTransform(rotationAngle: CGFloat.pi)
         }
     }
 }

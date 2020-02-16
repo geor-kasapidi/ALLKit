@@ -14,7 +14,7 @@ final class SomeLayoutSpec: LayoutSpec {
 }
 ```
 
-It would be nice to have an API with closures in this place. And ALLKit provides closure support for gestures and controls:
+It would be nice to have an API with closures in this place. And ALLKit provides closure support for gestures and controls (available by Extended subspec):
 
 * **Gestures**
 
@@ -40,7 +40,7 @@ Now you have all power of closures when using gestures or control events.
 
 ```swift
 final class SomeLayoutSpec: LayoutSpec {
-    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNode {
+    override func makeNodeWith(boundingDimensions: LayoutDimensions<CGFloat>) -> LayoutNodeConvertible {
         return LayoutNode(...) { (view: UIView, _) in
             view.all_addGestureRecognizer({ (_: UITapGestureRecognizer) in
                 // wow! swift closure!

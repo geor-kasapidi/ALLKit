@@ -15,22 +15,13 @@ private final class SwipeTextLayoutSpec: ModelLayoutSpec<String> {
     }
 }
 
-final class RootViewController: UIViewController {
-    private let adapter = CollectionViewAdapter()
-
+final class RootViewController: ListViewController<UICollectionView, UICollectionViewCell> {
     override func viewDidLoad() {
         super.viewDidLoad()
 
         title = "Select demo"
 
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
-
-        do {
-            view.backgroundColor = UIColor.white
-            view.addSubview(adapter.collectionView)
-            adapter.collectionView.alwaysBounceVertical = true
-            adapter.collectionView.backgroundColor = UIColor.white
-        }
 
         do {
             typealias MenuRow = (name: String, onSelect: () -> Void)
@@ -93,19 +84,13 @@ final class RootViewController: UIViewController {
                 })
             ]
 
-            let items = menuRows.enumerated().map { (index, row) -> ListItem in
-                let rowItem = ListItem(
+            let items = menuRows.enumerated().map { (index, row) -> ListItem<DemoContext> in
+                let rowItem = ListItem<DemoContext>(
                     id: row.name,
                     layoutSpec: SelectableRowLayoutSpec(model: row.name)
                 )
 
-                rowItem.setup = { [weak self] view, itemIndex in
-                    view.all_addGestureRecognizer { (_: UITapGestureRecognizer) in
-                        self?.adapter.collectionView.deselectItem(at: IndexPath(item: itemIndex, section: 0), animated: true)
-
-                        row.onSelect()
-                    }
-                }
+                rowItem.context = DemoContext(onSelect: row.onSelect)
 
                 return rowItem
             }
@@ -123,8 +108,12 @@ final class RootViewController: UIViewController {
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
 
-        adapter.collectionView.frame = view.bounds
-
         adapter.set(boundingDimensions: CGSize(width: view.bounds.width, height: .nan).layoutDimensions)
+    }
+
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+
+        adapter.contextForItem(at: indexPath.item)?.onSelect?()
     }
 }

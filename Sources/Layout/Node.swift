@@ -14,14 +14,14 @@ extension LayoutNode: LayoutNodeConvertible {
 public final class LayoutNode {
     let children: [LayoutNode]
     let viewFactory: ViewFactory?
-    let yoga: YogaNode
+    let yoga: Yoga.Node
 
     public init<ViewType: UIView>(children: [LayoutNodeConvertible?] = [],
                                   _ layout: FlexBox.Setup? = nil,
                                   _ LayoutNodeConvertible: ((ViewType, Bool) -> Void)? = nil) {
         self.children = children.compactMap({ $0?.layoutNode })
         viewFactory = LayoutNodeConvertible.flatMap(GenericViewFactory.init)
-        yoga = FlexBox(sizeProvider: nil, setup: layout).yoga
+        yoga = FlexBox(sizeProvider: nil, setup: layout, config: .main).yoga
         self.children.forEach { yoga.add(child: $0.yoga) }
     }
 
@@ -30,7 +30,7 @@ public final class LayoutNode {
                                   _ LayoutNodeConvertible: ((ViewType, Bool) -> Void)? = nil) {
         children = []
         viewFactory = LayoutNodeConvertible.flatMap(GenericViewFactory.init)
-        yoga = FlexBox(sizeProvider: sizeProvider, setup: layout).yoga
+        yoga = FlexBox(sizeProvider: sizeProvider, setup: layout, config: .main).yoga
     }
 }
 

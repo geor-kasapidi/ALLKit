@@ -24,7 +24,7 @@ let s = NSAttributedString(
 
 Separation of properties into attributes and paragraph style complicates the creation of NSAttributedStrings.
 
-[AttributedStringBuilder](../Sources/StringBuilder/AttributedStringBuilder.swift) solves this problem:
+[AttributedStringBuilder](../Sources/StringBuilder/AttributedStringBuilder.swift) solves this problem (available by StringBuilder subspec):
 
 ```swift
 let s = "some text".attributed()

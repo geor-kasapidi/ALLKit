@@ -17,19 +17,9 @@ struct MailRowSwipeItem {
     let text: String
 }
 
-final class MailViewController: UIViewController {
-    let adapter = CollectionViewAdapter()
-
+final class MailViewController: ListViewController<UICollectionView, UICollectionViewCell> {
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        do {
-            view.backgroundColor = UIColor.white
-
-            view.addSubview(adapter.collectionView)
-
-            adapter.collectionView.backgroundColor = UIColor.white
-        }
 
         DispatchQueue.global().async {
             let sentences = DemoContent.loremIpsum
@@ -49,15 +39,13 @@ final class MailViewController: UIViewController {
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
 
-        adapter.collectionView.frame = view.bounds
-
         adapter.set(boundingDimensions: CGSize(width: view.bounds.width, height: .nan).layoutDimensions)
     }
 
     private var rows: [MailRow] = [] {
         didSet {
-            let items = rows.map { row -> ListItem in
-                let item = ListItem(
+            let items = rows.map { row -> ListItem<DemoContext> in
+                let item = ListItem<DemoContext>(
                     id: row.id,
                     layoutSpec: MailRowLayoutSpec(model: row)
                 )
@@ -94,11 +82,9 @@ final class MailViewController: UIViewController {
                     })
                 )
 
-                item.swipeActions = SwipeActions([customAction, deleteAction])
-
-                item.setup = { view, _ in
-                    view.all_addGestureRecognizer { (_: UITapGestureRecognizer) in
-                        print(row.text)
+                if let actions = SwipeActions([customAction, deleteAction]) {
+                    item.makeView = { layout, index -> UIView in
+                        actions.makeView(contentLayout: layout)
                     }
                 }
 

@@ -1,18 +1,21 @@
 import Foundation
 import UIKit
 
-typealias CellModel = (item: ListItem, layout: Layout)
+struct CellModel<ContextType> {
+    let item: ListItem<ContextType>
+    let layout: Layout
+}
 
 private enum MakeModels {
-    static func from(boundingDimensions: LayoutDimensions<CGFloat>,
-                     items: [ListItem],
-                     async: Bool,
-                     queue: DispatchQueue,
-                     completion: (([CellModel]) -> Void)?) {
+    static func from<ContextType>(boundingDimensions: LayoutDimensions<CGFloat>,
+                                  items: [ListItem<ContextType>],
+                                  async: Bool,
+                                  queue: DispatchQueue,
+                                  completion: (([CellModel<ContextType>]) -> Void)?) {
         if async {
             queue.async {
                 let models = items.map {
-                    ($0, $0.makeLayoutWith(boundingDimensions))
+                    CellModel(item: $0, layout: $0.makeLayoutWith(boundingDimensions))
                 }
 
                 completion?(models)
@@ -20,7 +23,7 @@ private enum MakeModels {
         } else {
             let models = queue.sync {
                 return items.map {
-                    ($0, $0.makeLayoutWith(boundingDimensions))
+                    CellModel(item: $0, layout: $0.makeLayoutWith(boundingDimensions))
                 }
             }
 
@@ -28,12 +31,12 @@ private enum MakeModels {
         }
     }
 
-    static func from(boundingDimensions: LayoutDimensions<CGFloat>,
-                     newItems: [ListItem],
-                     oldItems: [ListItem],
-                     oldModels: [CellModel],
-                     queue: DispatchQueue,
-                     completion: (([CellModel], Diff.Changes) -> Void)?) {
+    static func from<ContextType>(boundingDimensions: LayoutDimensions<CGFloat>,
+                                  newItems: [ListItem<ContextType>],
+                                  oldItems: [ListItem<ContextType>],
+                                  oldModels: [CellModel<ContextType>],
+                                  queue: DispatchQueue,
+                                  completion: (([CellModel<ContextType>], Diff.Changes) -> Void)?) {
         queue.async {
             let changes = Diff.between(oldItems, and: newItems)
 
@@ -59,7 +62,7 @@ private enum MakeModels {
             }
 
             let newModels = newItems.map {
-                ($0, layouts[$0] ?? $0.makeLayoutWith(boundingDimensions))
+                CellModel(item: $0, layout: layouts[$0] ?? $0.makeLayoutWith(boundingDimensions))
             }
 
             completion?(newModels, changes)
@@ -72,14 +75,14 @@ enum UpdateType {
     case patch(Diff.Changes)
 }
 
-final class ListViewDataSource {
+final class ListViewDataSource<ContextType> {
     private let queue = DispatchQueue(label: "ALLKit.ListViewDataSource.queue")
 
     private var generation: UInt64 = 0
     private var boundingDimensions: LayoutDimensions<CGFloat>?
-    private var items: [ListItem] = []
+    private var items: [ListItem<ContextType>] = []
 
-    private(set) var models: [CellModel] = []
+    private(set) var models: [CellModel<ContextType>] = []
 
     // MARK: -
 
@@ -112,8 +115,8 @@ final class ListViewDataSource {
         }
     }
 
-    func set(newItems: [ListItem], completion: ((UpdateType?) -> Void)?) {
-        let oldItems: [ListItem]
+    func set(newItems: [ListItem<ContextType>], completion: ((UpdateType?) -> Void)?) {
+        let oldItems: [ListItem<ContextType>]
 
         (oldItems, items) = (items, newItems)
 

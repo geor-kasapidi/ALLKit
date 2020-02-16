@@ -1,19 +1,17 @@
 import Foundation
 import UIKit
 
-public final class CollectionViewAdapter<CollectionViewType: UICollectionView, CellType: UICollectionViewCell>: NSObject, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+public final class CollectionViewAdapter<CollectionViewType: UICollectionView, CellType: UICollectionViewCell, ContextType>: NSObject, UICollectionViewDataSource {
     public struct Settings {
         public var allowInteractiveMovement: Bool
         public var allowMovesInBatchUpdates: Bool
     }
 
-    // MARK: -
-
     public let collectionView: CollectionViewType
-    let dataSource = ListViewDataSource()
+    let dataSource = ListViewDataSource<ContextType>()
     private let cellId = UUID().uuidString
 
-    public init(layout: UICollectionViewLayout) {
+    public required init(layout: UICollectionViewLayout) {
         collectionView = CollectionViewType(frame: .zero, collectionViewLayout: layout)
 
         if #available(iOS 10.0, *) {
@@ -31,28 +29,9 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
 
         super.init()
 
-        collectionView.delegate = self
         collectionView.dataSource = self
 
         collectionView.register(CellType.self, forCellWithReuseIdentifier: cellId)
-    }
-
-    public convenience init(scrollDirection: UICollectionView.ScrollDirection = .vertical,
-                            sectionInset: UIEdgeInsets = .zero,
-                            minimumLineSpacing: CGFloat = 0,
-                            minimumInteritemSpacing: CGFloat = 0) {
-        let flowLayout = UICollectionViewFlowLayout()
-
-        do {
-            flowLayout.scrollDirection = scrollDirection
-            flowLayout.sectionInset = sectionInset
-            flowLayout.minimumLineSpacing = minimumLineSpacing
-            flowLayout.minimumInteritemSpacing = minimumInteritemSpacing
-            flowLayout.headerReferenceSize = .zero
-            flowLayout.footerReferenceSize = .zero
-        }
-
-        self.init(layout: flowLayout)
     }
 
     deinit {
@@ -60,7 +39,7 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
         collectionView.dataSource = nil
     }
 
-    // MARK: -
+    // MARK: - Public API
 
     public var settings: Settings {
         willSet {
@@ -68,13 +47,17 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
         }
     }
 
-    public var scrollEvents = ScrollEvents() {
-        willSet {
-            assert(Thread.isMainThread)
-        }
+    public func contextForItem(at index: Int) -> ContextType? {
+        assert(Thread.isMainThread)
+
+        return dataSource.models[safe: index]?.item.context
     }
 
-    // MARK: -
+    public func sizeForItem(at index: Int) -> CGSize? {
+        assert(Thread.isMainThread)
+
+        return dataSource.models[safe: index]?.layout.size
+    }
 
     public func set(boundingDimensions: LayoutDimensions<CGFloat>, async: Bool = false, completion: ((Bool) -> Void)? = nil) {
         assert(Thread.isMainThread)
@@ -84,7 +67,7 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
         }
     }
 
-    public func set(items: [ListItem], animated: Bool = true, completion: ((Bool) -> Void)? = nil) {
+    public func set(items: [ListItem<ContextType>], animated: Bool = true, completion: ((Bool) -> Void)? = nil) {
         assert(Thread.isMainThread)
 
         dataSource.set(newItems: items) { [weak self] updateType in
@@ -98,7 +81,24 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
         }
     }
 
-    // MARK: -
+    public func handleMoveGesture<T: UIGestureRecognizer>(_ g: T) {
+        guard settings.allowInteractiveMovement else { return }
+
+        switch(g.state) {
+        case .began:
+            if let indexPath = collectionView.indexPathForItem(at: g.location(in: collectionView)) {
+                collectionView.beginInteractiveMovementForItem(at: indexPath)
+            }
+        case .changed:
+            let location = g.location(in: collectionView)
+
+            collectionView.updateInteractiveMovementTargetPosition(location)
+        case .ended:
+            collectionView.endInteractiveMovement()
+        default:
+            collectionView.cancelInteractiveMovement()
+        }
+    }
 
     private func update(type: UpdateType?, _ completion: ((Bool) -> Void)?) {
         switch type {
@@ -149,58 +149,14 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
         }
     }
 
-    // MARK: -
-
-    @discardableResult
-    public func setupGestureForInteractiveMovement() -> UILongPressGestureRecognizer {
-        assert(Thread.isMainThread)
-
-        return collectionView.all_addGestureRecognizer { [weak self] gesture in
-            self?.handleMove(gesture)
-        }
-    }
-
-    private func handleMove(_ gesture: UILongPressGestureRecognizer) {
-        guard settings.allowInteractiveMovement else { return }
-
-        switch(gesture.state) {
-        case .began:
-            if let indexPath = collectionView.indexPathForItem(at: gesture.location(in: collectionView)) {
-                collectionView.beginInteractiveMovementForItem(at: indexPath)
-            }
-        case .changed:
-            let location = gesture.location(in: collectionView)
-
-            collectionView.updateInteractiveMovementTargetPosition(location)
-        case .ended:
-            collectionView.endInteractiveMovement()
-        default:
-            collectionView.cancelInteractiveMovement()
-        }
-    }
-
-    // MARK: -
-
-    public func sizeForItem(at index: Int) -> CGSize? {
-        assert(Thread.isMainThread)
-
-        return dataSource.models[safe: index]?.layout.size
-    }
-
-    // MARK: - UICollectionViewDelegateFlowLayout
-
-    public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return sizeForItem(at: indexPath.item) ?? .zero
-    }
-
     // MARK: - UICollectionViewDataSource
 
     public func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 1
+        1
     }
 
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return dataSource.models.count
+        dataSource.models.count
     }
 
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -208,48 +164,24 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
 
         let index = indexPath.item
 
+        let view: UIView?
+
         if let model = dataSource.models[safe: index] {
-            let view: UIView
-
-            if let swipeActions = model.item.swipeActions {
-                view = SwipeView(contentLayout: model.layout, actions: swipeActions)
-            } else {
-                view = model.layout.makeView()
-            }
-
-            model.item.setup?(view, index)
-
-            UIView.performWithoutAnimation {
-                cell.contentView.subviews.forEach({ $0.removeFromSuperview() })
-                cell.contentView.addSubview(view)
-            }
+            view = model.item.makeView?(model.layout, index) ?? model.layout.makeView()
         } else {
-            UIView.performWithoutAnimation {
-                cell.contentView.subviews.forEach({ $0.removeFromSuperview() })
-            }
+            view = nil
+        }
+
+        UIView.performWithoutAnimation {
+            cell.contentView.subviews.forEach({ $0.removeFromSuperview() })
+            view.flatMap(cell.contentView.addSubview(_:))
         }
 
         return cell
     }
 
-    public func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
-        return false
-    }
-
-    public func collectionView(_ collectionView: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
-        return false
-    }
-
-    public func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        dataSource.models[safe: indexPath.item]?.item.willDisplay?(cell.contentView.subviews.first, indexPath.item)
-    }
-
-    public func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        dataSource.models[safe: indexPath.item]?.item.didEndDisplaying?(cell.contentView.subviews.first, indexPath.item)
-    }
-
     public func collectionView(_ collectionView: UICollectionView, canMoveItemAt indexPath: IndexPath) -> Bool {
-        return settings.allowInteractiveMovement && dataSource.models[safe: indexPath.item]?.item.canMove ?? false
+        settings.allowInteractiveMovement && dataSource.models[safe: indexPath.item]?.item.canMove ?? false
     }
 
     public func collectionView(_ collectionView: UICollectionView, moveItemAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
@@ -259,50 +191,5 @@ public final class CollectionViewAdapter<CollectionViewType: UICollectionView, C
         dataSource.moveItem(from: sourceIndex, to: destinationIndex)
 
         dataSource.models[safe: destinationIndex]?.item.didMove?(sourceIndex, destinationIndex)
-    }
-
-    // MARK: - UIScrollViewDelegate
-
-    public func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        scrollEvents.didScroll?(scrollView)
-    }
-
-    public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-        scrollEvents.willBeginDragging?(scrollView)
-    }
-
-    public func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
-        scrollEvents.willEndDragging?(ScrollEvents.WillEndDraggingContext(
-            scrollView: scrollView,
-            velocity: velocity,
-            targetContentOffset: targetContentOffset
-        ))
-    }
-
-    public func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        scrollEvents.didEndDragging?(ScrollEvents.DidEndDraggingContext(
-            scrollView: scrollView,
-            willDecelerate: decelerate
-        ))
-    }
-
-    public func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
-        scrollEvents.willBeginDecelerating?(scrollView)
-    }
-
-    public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        scrollEvents.didEndDecelerating?(scrollView)
-    }
-
-    public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
-        scrollEvents.didEndScrollingAnimation?(scrollView)
-    }
-
-    public func scrollViewDidScrollToTop(_ scrollView: UIScrollView) {
-        scrollEvents.didScrollToTop?(scrollView)
-    }
-
-    public func scrollViewDidChangeAdjustedContentInset(_ scrollView: UIScrollView) {
-        scrollEvents.didChangeAdjustedContentInset?(scrollView)
     }
 }

@@ -2,35 +2,33 @@ import Foundation
 import UIKit
 import ALLKit
 
-final class MovementViewController: UIViewController {
+final class MovementViewController: ListViewController<UICollectionView, UICollectionViewCell> {
     private struct Consts {
         static let spacing: CGFloat = 4
     }
 
-    private let adapter = CollectionViewAdapter(
-        scrollDirection: .vertical,
-        sectionInset: UIEdgeInsets(top: Consts.spacing, left: Consts.spacing, bottom: Consts.spacing, right: Consts.spacing),
-        minimumLineSpacing: Consts.spacing,
-        minimumInteritemSpacing: Consts.spacing
-    )
+    init() {
+        super.init(adapter: CollectionViewAdapter(
+            scrollDirection: .vertical,
+            sectionInset: UIEdgeInsets(top: Consts.spacing, left: Consts.spacing, bottom: Consts.spacing, right: Consts.spacing),
+            minimumLineSpacing: Consts.spacing,
+            minimumInteritemSpacing: Consts.spacing
+        ))
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError()
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         do {
-            view.backgroundColor = UIColor.white
-
-            view.addSubview(adapter.collectionView)
-
-            adapter.collectionView.alwaysBounceVertical = true
-
-            adapter.collectionView.backgroundColor = UIColor.white
-        }
-
-        do {
             adapter.settings.allowInteractiveMovement = true
 
-            adapter.setupGestureForInteractiveMovement()
+            adapter.collectionView.all_addGestureRecognizer { [weak self] (g: UILongPressGestureRecognizer) in
+                self?.adapter.handleMoveGesture(g)
+            }
         }
 
         do {
@@ -46,8 +44,8 @@ final class MovementViewController: UIViewController {
 
     @objc
     private func updateItems() {
-        let items = (0..<9).map { number -> ListItem in
-            let listItem = ListItem(
+        let items = (0..<9).map { number -> ListItem<DemoContext> in
+            let listItem = ListItem<DemoContext>(
                 id: number,
                 layoutSpec: NumberLayoutSpec(model: number)
             )
@@ -66,8 +64,6 @@ final class MovementViewController: UIViewController {
 
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
-
-        adapter.collectionView.frame = view.bounds
 
         let numberOfColumns = 3
 

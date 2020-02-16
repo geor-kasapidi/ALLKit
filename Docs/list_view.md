@@ -5,10 +5,12 @@
 Instead of direct UICollectionView usage, ALLKit provides smart abstraction over:
 
 ```swift
-let adapter = CollectionViewAdapter(layout: /* collectionViewLayout */)
+let adapter = CollectionViewAdapter<...>(layout: /* collectionViewLayout */)
 ```
 
-Forget about manual setting delegate and datasource, cell subclassing, etc. Just pass size constraints and items array into adapter:
+Adapter is a collection view data source (delegate is up to you) and manages cells using yoga layout.
+
+All you need is just pass bouding dimensions:
 
 ```swift
 adapter.collectionView.frame = view.bounds
@@ -16,10 +18,12 @@ adapter.collectionView.frame = view.bounds
 adapter.set(
     boundingDimensions: CGSize(...).layoutDimensions
 )
+```
 
-...
+and data items:
 
-let items: [ListItem] = ...
+```swift
+let items: [ListItem<...>] = ...
 
 adapter.set(items: items, animated: true)
 ```
@@ -29,30 +33,21 @@ That's it. And no direct calls of `performBatchUpdates` or `reloadData`.
 [ListItem](../Sources/ListKit/ListItem.swift) object represents cell and connects data model with UI:
 
 ```swift
-let item = ListItem(id: Hashable, layoutSpec: LayoutSpec)
-
-item.setup = { view, index in
-
-}
-
-item.willDisplay = { view, index in
-
-}
+let item = ListItem<...>(id: Hashable, layoutSpec: LayoutSpec)
 ```
 
-ID and model are needed to [calculate the changes](auto_diff.md) between the previous and current item lists.
+ID is needed to [calculate the changes](auto_diff.md) between the previous and current item lists.
 
 ### Swipe actions
 
-UICollectionView does not have built-in swiping support, like UITableView. With ALLKit, you can easily set up swipe actions:
+UICollectionView does not have built-in swiping support, like UITableView. With ALLKit, you can easily set up swipe actions (available by Extended subspec):
 
 ```swift
-item.swipeActions = SwipeActions(
-    [
-        SwipeAction(layoutSpec: LayoutSpec1, setup: { ... }),
-        SwipeAction(layoutSpec: LayoutSpec2, setup: { ... })
-    ]
-)
+let actions = SwipeActions(...)
+
+item.makeView = { layout, index -> UIView in
+    actions.makeView(contentLayout: layout)
+}
 ```
 
 ### Different sizes
@@ -65,36 +60,20 @@ item.boundingDimensionsModifier = { w, h in
 }
 ```
 
-### Scroll events
-
-Adapter has an object through which you can receive UIScrollViewDelegate events:
-
-```swift
-adapter.scrollEvents.didScroll = { scrollView in
-
-}
-
-adapter.scrollEvents.willEndDragging = { ctx in
-    print(ctx.scrollView, ctx.velocity, ctx.targetContentOffset)
-}
-
-...
-```
-
 ### Interactive movement
 
 To enable this feature, you need to configure both the adapter and the elements:
 
 ```swift
 adapter.settings.allowInteractiveMovement = true
-adapter.setupGestureForInteractiveMovement()
 
+adapter.collectionView.all_addGestureRecognizer { [weak self] (g: UILongPressGestureRecognizer) in
+    self?.adapter.handleMoveGesture(g)
+}
 ...
 
 item.canMove = true
-item.didMove = { from, to in
-
-}
+item.didMove = { from, to in }
 ```
 
 ### Custom collection view and cells
@@ -112,12 +91,12 @@ final class CustomCell: UICollectionViewCell {
 
 ...
 
-let adapter = CollectionViewAdapter<UICollectionView, CustomCell>()
+let adapter = CollectionViewAdapter<UICollectionView, CustomCell, Any>()
 ```
 
 ### ❗️❗️❗️ DO NOT ❗️❗️❗️
 
 * ...modify cell's contentView directly. Adapter creates cell UI based on the spec that you specified in the ListItem object.
 * ...call collection view methods that are relevant to updating UI, such as `reloadData`, `performBatchUpdates`, etc. May the [AutoDiff](auto_diff.md) be with you.
-* ...setting the collection view delegate and dataSource.
+* ...setting the collection view dataSource.
 * ...enable prefetching in collection view.

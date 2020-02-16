@@ -22,9 +22,9 @@ class ListItemTests: XCTestCase {
         let m2 = TestModel(id: "2", value: 200)
         let m3 = TestModel(id: "1", value: 100)
 
-        let item1 = ListItem(id: m1.id, layoutSpec: TestLayoutSpec())
-        let item2 = ListItem(id: m2.id, layoutSpec: TestLayoutSpec())
-        let item3 = ListItem(id: m3.id, layoutSpec: TestLayoutSpec())
+        let item1 = ListItem<Void>(id: m1.id, layoutSpec: TestLayoutSpec())
+        let item2 = ListItem<Void>(id: m2.id, layoutSpec: TestLayoutSpec())
+        let item3 = ListItem<Void>(id: m3.id, layoutSpec: TestLayoutSpec())
 
         XCTAssert(item1 == item3)
         XCTAssert(item3 == item1)

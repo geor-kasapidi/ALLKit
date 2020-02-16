@@ -27,9 +27,25 @@ public struct SwipeActions {
     }
 }
 
-public protocol SwipeViewPublicInterface {
+public protocol ISwipeView {
     func open(animated: Bool)
     func close(animated: Bool)
+}
+
+extension SwipeView: ISwipeView {
+    func open(animated: Bool) {
+        update(offset: 1, animated: animated)
+    }
+
+    func close(animated: Bool) {
+        update(offset: 0, animated: animated)
+    }
+}
+
+extension SwipeActions {
+    public func makeView(contentLayout: Layout) -> UIView & ISwipeView {
+        SwipeView(contentLayout: contentLayout, actions: self)
+    }
 }
 
 final class SwipeView: UIView, UIGestureRecognizerDelegate {
@@ -177,15 +193,5 @@ final class SwipeView: UIView, UIGestureRecognizerDelegate {
                 height: bounds.height
             )
         }
-    }
-}
-
-extension SwipeView: SwipeViewPublicInterface {
-    func open(animated: Bool) {
-        update(offset: 1, animated: animated)
-    }
-
-    func close(animated: Bool) {
-        update(offset: 0, animated: animated)
     }
 }

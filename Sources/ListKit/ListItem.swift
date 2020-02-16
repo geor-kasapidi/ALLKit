@@ -1,24 +1,22 @@
 import Foundation
 import UIKit
 
-public final class ListItem: Hashable {
+public final class ListItem<ContextType>: Hashable {
     let id: AnyHashable
     let layoutSpec: LayoutSpec
 
-    public init<T: Hashable>(id: T, layoutSpec: LayoutSpec) {
+    public init<IdType: Hashable>(id: IdType, layoutSpec: LayoutSpec) {
         self.id = AnyHashable(id)
         self.layoutSpec = layoutSpec
     }
 
     // MARK: - Public properties
 
+    public var context: ContextType?
+    public var makeView: ((Layout, Int) -> UIView)?
     public var boundingDimensionsModifier: LayoutDimensions<CGFloat>.Modifier?
-    public var swipeActions: SwipeActions?
-    public var setup: ((UIView, Int) -> Void)?
     public var canMove: Bool = false
     public var didMove: ((Int, Int) -> Void)?
-    public var willDisplay: ((UIView?, Int) -> Void)?
-    public var didEndDisplaying: ((UIView?, Int) -> Void)?
 
     // MARK: - Hashable & Equatable
 

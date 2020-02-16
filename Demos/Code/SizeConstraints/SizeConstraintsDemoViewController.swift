@@ -2,34 +2,28 @@ import Foundation
 import UIKit
 import ALLKit
 
-final class SizeConstraintsDemoViewController: UIViewController {
-    private let adapter = CollectionViewAdapter(
-        scrollDirection: .vertical,
-        sectionInset: UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2),
-        minimumLineSpacing: 0,
-        minimumInteritemSpacing: 0
-    )
+final class SizeConstraintsDemoViewController: ListViewController<UICollectionView, UICollectionViewCell> {
+    init() {
+        super.init(adapter: CollectionViewAdapter(
+            scrollDirection: .vertical,
+            sectionInset: UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2),
+            minimumLineSpacing: 0,
+            minimumInteritemSpacing: 0
+        ))
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        do {
-            view.backgroundColor = UIColor.white
-
-            view.addSubview(adapter.collectionView)
-
-            adapter.collectionView.backgroundColor = UIColor.white
-        }
-
-        do {
-            adapter.set(items: generateItems())
-        }
+        adapter.set(items: generateItems())
     }
 
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
-
-        adapter.collectionView.frame = view.bounds
 
         adapter.set(
             boundingDimensions: CGSize(
@@ -39,8 +33,8 @@ final class SizeConstraintsDemoViewController: UIViewController {
         )
     }
 
-    private func generateItems() -> [ListItem] {
-        var items = [ListItem]()
+    private func generateItems() -> [ListItem<DemoContext>] {
+        var items = [ListItem<DemoContext>]()
 
         (0..<100).forEach { i in
             let n = Int(arc4random_uniform(5))
@@ -50,7 +44,7 @@ final class SizeConstraintsDemoViewController: UIViewController {
 
                 let emoji = String(DemoContent.emodjiString.randomElement() ?? "💥")
 
-                let listItem = ListItem(
+                let listItem = ListItem<DemoContext>(
                     id: id,
                     layoutSpec: EmojiLayoutSpec(model: emoji)
                 )

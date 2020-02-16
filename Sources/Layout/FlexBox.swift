@@ -183,20 +183,23 @@ extension FlexAlign {
     }
 }
 
+extension Yoga.Config {
+    static let main = Yoga.Config(pointScale: UIScreen.main.scale)
+}
+
 public final class FlexBox {
     public typealias Setup = (FlexBox) -> FlexBox
 
-    let yoga: YogaNode
+    let yoga: Yoga.Node
 
-    init(sizeProvider: SizeProvider?, setup: Setup?) {
+    init(sizeProvider: SizeProvider?, setup: Setup?, config: Yoga.Config) {
         if let sizeProvider = sizeProvider {
-            yoga = YogaNode(measureFunc: {
+            yoga = Yoga.Node(config: config, measureFunc: {
                 sizeProvider.calculateSize(boundedBy: $0.layoutDimensions)
             })
         } else {
-            yoga = YogaNode(measureFunc: nil)
+            yoga = Yoga.Node(config: config, measureFunc: nil)
         }
-        yoga.pointScale(UIScreen.main.scale)
         setup?(self)
     }
 

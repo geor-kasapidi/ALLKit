@@ -2,27 +2,15 @@ import Foundation
 import UIKit
 import ALLKit
 
-final class FeedViewController: UIViewController {
-    private let adapter = CollectionViewAdapter()
-
+final class FeedViewController: ListViewController<UICollectionView, UICollectionViewCell> {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        do {
-            view.backgroundColor = UIColor.white
+        DispatchQueue.global().async {
+            let items = self.generateItems()
 
-            view.addSubview(adapter.collectionView)
-
-            adapter.collectionView.backgroundColor = UIColor.white
-        }
-
-        do {
-            DispatchQueue.global().async {
-                let items = self.generateItems()
-
-                DispatchQueue.main.async {
-                    self.adapter.set(items: items)
-                }
+            DispatchQueue.main.async {
+                self.adapter.set(items: items)
             }
         }
     }
@@ -30,13 +18,11 @@ final class FeedViewController: UIViewController {
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
 
-        adapter.collectionView.frame = view.bounds
-
         adapter.set(boundingDimensions: CGSize(width: view.bounds.width, height: .nan).layoutDimensions)
     }
 
-    private func generateItems() -> [ListItem] {
-        return (0..<100).flatMap { _ -> [ListItem] in
+    private func generateItems() -> [ListItem<DemoContext>] {
+        return (0..<100).flatMap { _ -> [ListItem<DemoContext>] in
             let item = FeedItem(
                 avatar: URL(string: "https://picsum.photos/100/100?random&q=\(Int.random(in: 1..<1000))"),
                 title: UUID().uuidString,
@@ -46,14 +32,14 @@ final class FeedViewController: UIViewController {
                 viewsCount: UInt.random(in: 1..<1000)
             )
 
-            let listItem = ListItem(
+            let listItem = ListItem<DemoContext>(
                 id: item.id,
                 layoutSpec: FeedItemLayoutSpec(model: item)
             )
 
             let sep = item.id + "_sep"
 
-            let sepListItem = ListItem(
+            let sepListItem = ListItem<DemoContext>(
                 id: sep,
                 layoutSpec: FeedItemSeparatorLayoutSpec()
             )

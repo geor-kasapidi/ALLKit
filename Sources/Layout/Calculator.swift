@@ -66,8 +66,8 @@ final class FlatLayoutCalculator: LayoutCalculator {
         let node = spec.makeNodeWith(boundingDimensions: boundingDimensions).layoutNode
 
         node.yoga.calculateLayout(
-            width: boundingDimensions.width.value,
-            height: boundingDimensions.height.value,
+            width: Float(boundingDimensions.width.value ?? .nan),
+            height: Float(boundingDimensions.height.value ?? .nan),
             parentDirection: layoutDirection == .rightToLeft ? .RTL : .LTR
         )
 

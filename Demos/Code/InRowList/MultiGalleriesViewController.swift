@@ -7,40 +7,26 @@ struct GalleryItem {
     let images: [URL]
 }
 
-final class MultiGalleriesViewController: UIViewController {
-    private let adapter = CollectionViewAdapter()
-
+final class MultiGalleriesViewController: ListViewController<UICollectionView, UICollectionViewCell> {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        do {
-            view.backgroundColor = UIColor.white
+        let listItems = DemoContent.NATO.map { name -> ListItem<DemoContext> in
+            let images = (0..<100).map { _ in URL(string: "https://picsum.photos/200/150?random&q=\(Int.random(in: 1..<1000))")! }
 
-            view.addSubview(adapter.collectionView)
+            let listItem = ListItem<DemoContext>(
+                id: name,
+                layoutSpec: GalleryItemLayoutSpec(model: GalleryItem(name: name, images: images))
+            )
 
-            adapter.collectionView.backgroundColor = UIColor.white
+            return listItem
         }
 
-        do {
-            let listItems = DemoContent.NATO.map { name -> ListItem in
-                let images = (0..<100).map { _ in URL(string: "https://picsum.photos/200/150?random&q=\(Int.random(in: 1..<1000))")! }
-
-                let listItem = ListItem(
-                    id: name,
-                    layoutSpec: GalleryItemLayoutSpec(model: GalleryItem(name: name, images: images))
-                )
-
-                return listItem
-            }
-
-            adapter.set(items: listItems)
-        }
+        adapter.set(items: listItems)
     }
 
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
-
-        adapter.collectionView.frame = view.bounds
 
         adapter.set(boundingDimensions: CGSize(width: view.bounds.width, height: .nan).layoutDimensions)
     }

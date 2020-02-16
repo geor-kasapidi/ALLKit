@@ -38,7 +38,7 @@ extension LayoutDimensions {
 }
 
 extension LayoutDimensions where T == CGFloat {
-    var size: CGSize {
+    public var size: CGSize {
         return CGSize(
             width: width.value ?? .greatestFiniteMagnitude,
             height: height.value ?? .greatestFiniteMagnitude

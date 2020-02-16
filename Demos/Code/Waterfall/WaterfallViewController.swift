@@ -25,14 +25,11 @@ private final class WaterfallColorLayoutSpec: ModelLayoutSpec<String> {
     }
 }
 
-final class WaterfallViewController: UIViewController, WaterfallLayoutDelegate {
+final class WaterfallViewController: ListViewController<UICollectionView, UICollectionViewCell>, WaterfallLayoutDelegate {
     private let waterfallLayout = WaterfallLayout(numberOfColumns: 2, spacing: 4)
-    private let adapter: CollectionViewAdapter<UICollectionView, UICollectionViewCell>
 
     init() {
-        adapter = CollectionViewAdapter(layout: waterfallLayout)
-
-        super.init(nibName: nil, bundle: nil)
+        super.init(adapter: CollectionViewAdapter(layout: waterfallLayout))
 
         waterfallLayout.delegate = self
     }
@@ -44,17 +41,13 @@ final class WaterfallViewController: UIViewController, WaterfallLayoutDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        adapter.collectionView.backgroundColor = UIColor.white
-
-        view.addSubview(adapter.collectionView)
-
         DispatchQueue.global().async { [weak self] in
             let content = DemoContent.loremIpsum.joined(separator: " ")
 
-            let items: [ListItem] = (0..<Int.random(in: 100..<200)).map { index in
+            let items: [ListItem<DemoContext>] = (0..<Int.random(in: 100..<200)).map { index in
                 let randomIndex = content.indices.randomElement()!
 
-                let item = ListItem(
+                let item = ListItem<DemoContext>(
                     id: String(index),
                     layoutSpec: WaterfallColorLayoutSpec(model: String(content[randomIndex...]))
                 )
@@ -70,8 +63,6 @@ final class WaterfallViewController: UIViewController, WaterfallLayoutDelegate {
 
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
-
-        adapter.collectionView.frame = view.bounds
 
         adapter.set(
             boundingDimensions: CGSize(

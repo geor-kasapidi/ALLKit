@@ -2,32 +2,28 @@ import Foundation
 import UIKit
 import ALLKit
 
-final class AutoDiffViewController: UIViewController {
+final class AutoDiffViewController: ListViewController<UICollectionView, UICollectionViewCell> {
     private struct Consts {
         static let spacing: CGFloat = 4
     }
 
-    private let adapter = CollectionViewAdapter(
-        scrollDirection: .vertical,
-        sectionInset: UIEdgeInsets(top: Consts.spacing, left: Consts.spacing, bottom: Consts.spacing, right: Consts.spacing),
-        minimumLineSpacing: Consts.spacing,
-        minimumInteritemSpacing: Consts.spacing
-    )
+    init() {
+        super.init(adapter: CollectionViewAdapter(
+            scrollDirection: .vertical,
+            sectionInset: UIEdgeInsets(top: Consts.spacing, left: Consts.spacing, bottom: Consts.spacing, right: Consts.spacing),
+            minimumLineSpacing: Consts.spacing,
+            minimumInteritemSpacing: Consts.spacing
+        ))
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError()
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         do {
-            view.backgroundColor = UIColor.white
-
-            view.addSubview(adapter.collectionView)
-
-            adapter.collectionView.backgroundColor = UIColor.white
-        }
-
-        do {
-            let controlsView = UIView()
-
             let model = AdapterControlsModel(
                 delayChanged: { [weak self] delay in
                     self?.delay = delay
@@ -37,9 +33,9 @@ final class AutoDiffViewController: UIViewController {
                 }
             )
 
-            AdapterControlsLayoutSpec(model: model)
+            let controlsView = AdapterControlsLayoutSpec(model: model)
                 .makeLayoutWith(boundingDimensions: CGSize(width: 300, height: 40).layoutDimensions)
-                .setup(in: controlsView)
+                .makeView()
 
             setToolbarItems([UIBarButtonItem(customView: controlsView)], animated: false)
         }
@@ -56,8 +52,6 @@ final class AutoDiffViewController: UIViewController {
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
 
-        adapter.collectionView.frame = view.bounds
-
         let numberOfColumns = 4
 
         let size = (view.bounds.width - CGFloat(numberOfColumns + 1) * Consts.spacing) / CGFloat(numberOfColumns) - 1
@@ -68,11 +62,22 @@ final class AutoDiffViewController: UIViewController {
     private func generateItems() {
         let numbers = (0..<100).map { _ in Int(arc4random_uniform(100)) }
 
-        let items = numbers.map { number -> ListItem in
-            ListItem(
+        let items = numbers.map { number -> ListItem<DemoContext> in
+            let item = ListItem<DemoContext>(
                 id: number,
                 layoutSpec: NumberLayoutSpec(model: number)
             )
+
+            item.context = DemoContext(
+                willDisplay: { _ in
+                    print("👆🏻", number)
+                },
+                didEndDisplaying: { _ in
+                    print("👇🏻", number)
+                }
+            )
+
+            return item
         }
 
         adapter.set(items: items)
@@ -80,6 +85,14 @@ final class AutoDiffViewController: UIViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             self?.generateItems()
         }
+    }
+
+    override func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        adapter.contextForItem(at: indexPath.item)?.willDisplay?(cell.contentView)
+    }
+
+    override func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        adapter.contextForItem(at: indexPath.item)?.didEndDisplaying?(cell.contentView)
     }
 
     private var delay: TimeInterval = 0.5

@@ -135,7 +135,7 @@ view.frame = CGRect(origin: .zero, size: layout.size)
 layout.makeContentIn(view: view)
 ```
 
-The default implementation of the `Layout` protocol creates subviews in the provided view if it is empty, otherwise existing subviews are reused.
+The default implementation of the `Layout` protocol creates subviews in the provided view (if no subviews), otherwise reuses existing subviews.
 
 Methods `makeContentIn` and `makeView` must be used from main thread.
 

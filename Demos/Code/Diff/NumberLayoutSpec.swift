@@ -9,15 +9,15 @@ final class NumberLayoutSpec: ModelLayoutSpec<Int> {
             .foregroundColor(UIColor.white)
             .make()
 
-        let numberNode = LayoutNode(sizeProvider: attributedText) { (label: UILabel, _) in
-            label.attributedText = attributedText
-        }
-
-        return LayoutNode(children: [numberNode], {
+        return LayoutNodeBuilder().layout {
             $0.alignItems(.center).justifyContent(.center)
-        }) { (view: UIView, _) in
+        }.view { (view: UIView, _) in
             view.layer.cornerRadius = 4
             view.backgroundColor = #colorLiteral(red: 0.1764705926, green: 0.4980392158, blue: 0.7568627596, alpha: 1)
+        }.body {
+            LayoutNode(sizeProvider: attributedText) { (label: UILabel, _) in
+                label.attributedText = attributedText
+            }
         }
     }
 }

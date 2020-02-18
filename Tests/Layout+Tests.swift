@@ -105,16 +105,6 @@ class LayoutTests: XCTestCase {
         XCTAssert(view.subviews[1].frame == CGRect(x: 120, y: 10, width: 110, height: 110))
     }
 
-    func testViewTags() {
-        let view = UIView()
-
-        LayoutSpec3().makeLayoutWith(boundingDimensions: CGSize(width: .nan, height: CGFloat.nan).layoutDimensions).setup(in: view)
-
-        view.subviews.enumerated().forEach { (index, subview) in
-            XCTAssert(subview.tag == index + 1)
-        }
-    }
-
     func testNilText() {
         do {
             let view = UIView()

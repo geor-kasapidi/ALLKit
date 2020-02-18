@@ -34,17 +34,14 @@ final class FlatLayoutCalculator: LayoutCalculator {
 
         func makeContentIn(view: UIView) {
             if view.subviews.isEmpty {
-                data.views.enumerated().forEach { (index, viewData) in
+                data.views.forEach { viewData in
                     let subview = viewData.factory.makeView()
-                    subview.tag = index + 1
                     view.addSubview(subview)
                     subview.frame = viewData.frame
                     viewData.factory.config(view: subview, isNew: true)
                 }
             } else {
-                view.subviews.forEach { subview in
-                    let index = subview.tag - 1
-
+                view.subviews.enumerated().forEach { (index, subview) in
                     guard data.views.indices.contains(index) else {
                         return
                     }

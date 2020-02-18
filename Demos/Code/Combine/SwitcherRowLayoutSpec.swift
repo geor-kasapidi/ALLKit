@@ -30,7 +30,11 @@ final class SwitcherRowLayoutSpec: ModelLayoutSpec<String> {
                         switcher.onTintColor = #colorLiteral(red: 0.1764705926, green: 0.4980392158, blue: 0.7568627596, alpha: 1)
                         switcher.setOn(true, animated: false)
                         switcher.all_setEventHandler(for: .valueChanged, { [weak switcher] in
-                            switcher.flatMap { $0.superview?.viewWithTag($0.tag - 1)?.alpha = $0.isOn ? 1 : 0.3 }
+
+                            guard let switcher = switcher, let index = switcher.superview?.subviews.firstIndex(of: switcher) else {
+                                return
+                            }
+                            switcher.superview?.subviews[index - 1].alpha = switcher.isOn ? 1 : 0.3
                         })
                     }
                 }

@@ -2,9 +2,9 @@
 
 Text SDK provided by iOS is highly optimized, but sometimes text rendering can take a lot of time.
 If you have an attributed string with a large number of emoji or image attachments (ex. chat app), rendering can takes tens of milliseconds.
-This is unacceptable because text views draw text in the main thread.
+This is unacceptable because text views draw text on main thread.
 
-For drawing text in the background, ALLKit provides special API (available by Extended subspec):
+For drawing text in background, ALLKit provides special API (available by Extended subspec):
 
 1. [AttributedStringDrawing](../Sources/Support/AttributedStringDrawing.swift) - object that knows how to calculate text size and create a bitmap from text.
 

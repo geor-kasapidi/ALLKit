@@ -6,6 +6,11 @@ private struct Model: Hashable {
     let value: String
 }
 
+private struct DiffableModel: Diffable {
+    var diffId: String
+    var value: String
+}
+
 class DiffTests: XCTestCase {
     func testAllInserts() {
         let result = Diff.between(Array(""), and: Array("abc"))
@@ -91,6 +96,22 @@ class DiffTests: XCTestCase {
 
         XCTAssert(deletes == 3)
         XCTAssert(inserts == 3)
+    }
+
+    func testDiffable() {
+        let m1 = DiffableModel(diffId: "1", value: "x")
+        var m2 = DiffableModel(diffId: "2", value: "y")
+
+        let x = [m1, m2]
+
+        m2.value = "z"
+
+        let y = [m1, m2]
+
+        let d = Diff.between(x, and: y)
+
+        XCTAssert(d.count == 1)
+        XCTAssert(d[0] == .update(1, 1))
     }
 
     func testPerfomance() {

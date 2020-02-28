@@ -1,3 +1,9 @@
+public protocol Diffable: Equatable {
+    associatedtype IdType: Hashable
+
+    var diffId: IdType { get }
+}
+
 public enum Diff {
     public enum Change: Hashable {
         public typealias Index = Int
@@ -10,6 +16,26 @@ public enum Diff {
 
     public typealias Changes = [Change]
 
+    public static func between<T: Diffable>(_ oldItems: [T], and newItems: [T]) -> Changes {
+        between(
+            oldItems: oldItems,
+            newItems: newItems,
+            getId: { $0.diffId },
+            isEqual: { $0 == $1 }
+        )
+    }
+
+    public static func between<T: Hashable>(_ oldItems: [T], and newItems: [T]) -> Changes {
+        between(
+            oldItems: oldItems,
+            newItems: newItems,
+            getId: { $0 },
+            isEqual: { $0 == $1 }
+        )
+    }
+
+    // MARK: - Private
+
     private final class Entry {
         var newCount: Int = 0
         var oldIndices: ArraySlice<Int> = []
@@ -20,7 +46,10 @@ public enum Diff {
         var reference: Int?
     }
 
-    public static func between<T: Hashable>(_ oldItems: [T], and newItems: [T]) -> Changes {
+    private static func between<IdType: Hashable, ModelType>(oldItems: [ModelType],
+                                                             newItems: [ModelType],
+                                                             getId: (ModelType) -> IdType,
+                                                             isEqual: (ModelType, ModelType) -> Bool) -> Changes {
         if oldItems.isEmpty && newItems.isEmpty {
             return []
         }
@@ -35,20 +64,24 @@ public enum Diff {
 
         // -------------------------------------------------------
 
-        var table = [T: Entry]()
+        var table = [IdType: Entry]()
 
         var newRecords = newItems.map { item -> Record in
-            let entry = table[item] ?? Entry()
+            let id = getId(item)
+
+            let entry = table[id] ?? Entry()
             entry.newCount += 1
-            table[item] = entry
+            table[id] = entry
 
             return Record(entry: entry, reference: nil)
         }
 
         var oldRecords = oldItems.enumerated().map { (index, item) -> Record in
-            let entry = table[item] ?? Entry()
+            let id = getId(item)
+
+            let entry = table[id] ?? Entry()
             entry.oldIndices.append(index)
-            table[item] = entry
+            table[id] = entry
 
             return Record(entry: entry, reference: nil)
         }
@@ -103,7 +136,7 @@ public enum Diff {
             let insertOffset = offset
 
             let moved = (oldIndex - deleteOffset + insertOffset) != newIndex
-            let updated = newItems[newIndex] != oldItems[oldIndex]
+            let updated = !isEqual(newItems[newIndex], oldItems[oldIndex])
 
             if updated {
                 changes.append(.update(oldIndex, oldIndex))
